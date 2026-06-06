@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Upload } from "lucide-react";
 
 type SidebarItem = {
   id: string;
@@ -32,6 +31,9 @@ const groups: { label: string; asset?: string; items: SidebarItem[] }[] = [
         id: "import",
         label: "Import dữ liệu",
         href: "/dashboard/import",
+        asset: "/brand/sidebar/import-data.svg",
+        width: 127,
+        height: 18,
       },
       {
         id: "data",
@@ -149,22 +151,6 @@ function NavigationItem({
           height={40}
           className="h-10 w-[222px]"
         />
-      </Link>
-    );
-  }
-
-  if (item.id === "import") {
-    return (
-      <Link
-        href={item.href}
-        className={`flex h-10 w-[222px] items-center gap-2.5 rounded-[7px] px-3 text-[14px] font-medium transition-colors ${
-          active
-            ? "bg-[#009B53] text-white shadow-[0_2px_5px_rgba(0,155,83,0.16)]"
-            : "text-[#009B53] hover:bg-[#ECFAF1]"
-        }`}
-      >
-        <Upload size={18} strokeWidth={1.65} aria-hidden="true" />
-        <span>{item.label}</span>
       </Link>
     );
   }
