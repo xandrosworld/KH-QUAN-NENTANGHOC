@@ -55,6 +55,22 @@ export async function appendImport(job: ImportJob, records: NormalizedRecord[]) 
   ]);
 }
 
+export async function deleteImport(jobId: string) {
+  const [jobs, existingRecords] = await Promise.all([getImportedJobs(), getImportedRecords()]);
+  const nextJobs = jobs.filter((job) => job.id !== jobId);
+
+  if (nextJobs.length === jobs.length) {
+    return false;
+  }
+
+  await Promise.all([
+    writeJson(jobsFile, nextJobs),
+    writeJson(recordsFile, existingRecords.filter((record) => record.importJobId !== jobId)),
+  ]);
+
+  return true;
+}
+
 export async function resetImportedData() {
   await ensureDataDir();
   await Promise.all([
