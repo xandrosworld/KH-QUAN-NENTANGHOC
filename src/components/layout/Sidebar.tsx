@@ -206,38 +206,54 @@ export default function Sidebar() {
         />
       </div>
 
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-[19px] pt-[18px]">
-        <NavigationItem item={dashboardItem} pathname={pathname} />
+      <nav className="flex min-h-0 flex-1 flex-col overflow-hidden px-[19px] pt-[18px]">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-4">
+          <NavigationItem item={dashboardItem} pathname={pathname} />
 
-        {groups.map((group) => (
-          <section key={group.label} className="mt-[18px]">
-            <div className="mb-[7px] flex h-[15px] items-center">
-              {group.asset ? (
-                <Image
-                  src={group.asset}
-                  alt={group.label}
-                  width={116}
-                  height={12}
-                  className="h-3 w-auto"
-                />
-              ) : (
-                <h2 className="text-[12px] font-bold uppercase leading-none text-[#009B53]">
-                  {group.label}
-                </h2>
-              )}
-            </div>
+          {groups.map((group) => (
+            <section key={group.label} className="mt-[18px]">
+              <div className="mb-[7px] flex h-[15px] items-center">
+                {group.asset ? (
+                  <Image
+                    src={group.asset}
+                    alt={group.label}
+                    width={116}
+                    height={12}
+                    className="h-3 w-auto"
+                  />
+                ) : (
+                  <h2 className="text-[12px] font-bold uppercase leading-none text-[#009B53]">
+                    {group.label}
+                  </h2>
+                )}
+              </div>
 
-            <div className="space-y-0">
-              {group.items.map((item) => (
-                <NavigationItem
-                  key={item.id}
-                  item={item}
-                  pathname={pathname}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+              <div className="space-y-0">
+                {group.items.map((item) => (
+                  <NavigationItem
+                    key={item.id}
+                    item={item}
+                    pathname={pathname}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        <Link
+          href="/dashboard/help"
+          aria-label="Need help? Xem hướng dẫn sử dụng"
+          className="mb-[18px] mt-3 block h-[54px] w-[222px] overflow-hidden rounded-[7px] transition-opacity hover:opacity-90"
+        >
+          <Image
+            src="/brand/sidebar/help-card.svg"
+            alt=""
+            width={222}
+            height={54}
+            className="h-[54px] w-[222px]"
+          />
+        </Link>
       </nav>
     </aside>
   );

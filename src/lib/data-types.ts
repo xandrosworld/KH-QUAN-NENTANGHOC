@@ -75,6 +75,27 @@ export interface ImportListResponse {
   };
 }
 
+export interface AnalyticsActiveFilters {
+  from?: string;
+  to?: string;
+  source?: ImportSource;
+  product?: string;
+  campaign?: string;
+}
+
+export interface AnalyticsFilterOptions {
+  dateRange: {
+    from?: string;
+    to?: string;
+  };
+  sources: {
+    value: ImportSource;
+    label: string;
+  }[];
+  products: string[];
+  campaigns: string[];
+}
+
 export interface AnalyticsPayload {
   dashboardKpis: KpiMetric[];
   revenueKpis: KpiMetric[];
@@ -104,5 +125,11 @@ export interface AnalyticsPayload {
     margin: number;
     roas: number;
     cpa: number;
+  };
+  activeFilters?: AnalyticsActiveFilters;
+  availableFilters?: AnalyticsFilterOptions;
+  recordCount?: {
+    total: number;
+    filtered: number;
   };
 }

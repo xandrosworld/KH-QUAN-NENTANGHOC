@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("admin@tronx.vn");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -98,6 +99,12 @@ export default function LoginPage() {
           </div>
         </div>
 
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-sm font-semibold text-green-600 transition hover:text-green-700">
+            Quên mật khẩu?
+          </Link>
+        </div>
+
         <button
           type="submit"
           disabled={loading}
@@ -119,6 +126,13 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <p className="mt-7 text-center text-sm text-gray-500">
+        Chưa có tài khoản?{" "}
+        <Link href="/register" className="font-semibold text-green-600 transition hover:text-green-700">
+          Đăng ký ngay
+        </Link>
+      </p>
     </div>
   );
 }

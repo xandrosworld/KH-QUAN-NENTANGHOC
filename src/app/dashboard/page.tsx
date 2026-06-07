@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import AnalyticsFilterBar from '@/components/dashboard/AnalyticsFilterBar';
 import MetricCard from '@/components/ui/MetricCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
@@ -13,6 +14,7 @@ import {
   topProducts,
   topCampaigns,
 } from '@/lib/mock-data';
+import type { AnalyticsActiveFilters } from '@/lib/data-types';
 import type { ChannelRevenue, ChartDataPoint, TopCampaign, TopProduct } from '@/lib/types';
 
 function RevenueChart({ data }: { data: ChartDataPoint[] }) {
@@ -52,6 +54,8 @@ function formatVnd(value: number) {
 }
 
 function getDonutGradient(data: ChannelRevenue[]) {
+  if (data.length === 0) return '#f3f4f6';
+
   let cursor = 0;
 
   return `conic-gradient(${data
@@ -213,7 +217,8 @@ function TopCampaignsTable({ campaigns }: { campaigns: TopCampaign[] }) {
 }
 
 export default function DashboardPage() {
-  const analytics = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
+  const analytics = useAnalyticsData(filters);
   const [adminName, setAdminName] = useState('Nguyễn Văn A');
   const kpis = analytics?.dashboardKpis ?? dashboardKpis;
   const chartData = analytics?.revenueChartData ?? revenueChartData;
@@ -259,13 +264,14 @@ export default function DashboardPage() {
             Tổng quan tình hình kinh doanh của bạn
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-600">
-            <span>01/06/2026 - 30/06/2026</span>
-            <Calendar size={16} className="text-gray-400" />
-          </div>
-        </div>
       </div>
+
+      <AnalyticsFilterBar
+        filters={filters}
+        options={analytics?.availableFilters}
+        recordCount={analytics?.recordCount}
+        onChange={setFilters}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">

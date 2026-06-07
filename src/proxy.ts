@@ -1,21 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth-session';
 
-const SESSION_COOKIE = 'tronx_session';
 const protectedApiPrefixes = ['/api/account', '/api/analytics', '/api/imports', '/api/chat'];
+const authPages = ['/login', '/register'];
 
-function hasSession(request: NextRequest) {
-  return request.cookies.get(SESSION_COOKIE)?.value === 'phase1-admin';
+async function hasSession(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  return Boolean(await verifySessionToken(token));
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authenticated = hasSession(request);
+  const authenticated = await hasSession(request);
   const isDashboard = pathname.startsWith('/dashboard');
   const isProtectedApi = protectedApiPrefixes.some((prefix) => pathname.startsWith(prefix));
 
   if ((isDashboard || isProtectedApi) && !authenticated) {
     if (isProtectedApi) {
-      return NextResponse.json({ error: 'Vui lòng đăng nhập để sử dụng API.' }, { status: 401 });
+      return NextResponse.json({ error: 'Vui long dang nhap de su dung API.' }, { status: 401 });
     }
 
     const loginUrl = request.nextUrl.clone();
@@ -24,7 +26,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname === '/login' && authenticated) {
+  if (authPages.includes(pathname) && authenticated) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = '/dashboard';
     dashboardUrl.search = '';
@@ -38,6 +40,7 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/login',
+    '/register',
     '/api/account/:path*',
     '/api/analytics/:path*',
     '/api/imports/:path*',

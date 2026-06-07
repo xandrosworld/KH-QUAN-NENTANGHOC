@@ -1,23 +1,22 @@
 import { NextResponse } from 'next/server';
-import { changeAdminPassword } from '@/lib/server/account-store';
-import { getSessionPayloadFromRequest } from '@/lib/server/request-session';
+import { resetPasswordWithOtp } from '@/lib/server/account-store';
 
 export async function POST(request: Request) {
-  const session = await getSessionPayloadFromRequest(request);
   const body = await request.json().catch(() => ({}));
-  const currentPassword = String(body.currentPassword ?? '');
+  const email = String(body.email ?? '');
+  const otp = String(body.otp ?? '');
   const newPassword = String(body.newPassword ?? '');
   const confirmPassword = String(body.confirmPassword ?? '');
 
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    return NextResponse.json({ error: 'Vui long nhap du thong tin doi mat khau.' }, { status: 400 });
+  if (!email || !otp || !newPassword || !confirmPassword) {
+    return NextResponse.json({ error: 'Vui long nhap day du thong tin.' }, { status: 400 });
   }
 
   if (newPassword !== confirmPassword) {
     return NextResponse.json({ error: 'Mat khau xac nhan khong khop.' }, { status: 400 });
   }
 
-  const result = await changeAdminPassword(currentPassword, newPassword, session?.sub);
+  const result = await resetPasswordWithOtp(email, otp, newPassword);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });

@@ -9,6 +9,7 @@ import {
   resetImportedData,
 } from '@/lib/server/data-store';
 import { parseImportFile } from '@/lib/server/import-parser';
+import { getSessionPayloadFromRequest } from '@/lib/server/request-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,6 +96,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSessionPayloadFromRequest(request);
   const formData = await request.formData();
   const file = formData.get('file');
   const source = formData.get('source');
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
 
   let result;
   try {
-    result = await parseImportFile(file, source, importedBy);
+    result = await parseImportFile(file, source, session?.name || session?.email || importedBy);
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || 'Không đọc được file import.' },

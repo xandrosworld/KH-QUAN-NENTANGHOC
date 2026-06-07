@@ -1,19 +1,16 @@
 "use client";
 
-import { Megaphone, Search, Target, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Megaphone, Target, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import AnalyticsFilterBar from "@/components/dashboard/AnalyticsFilterBar";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { topCampaigns } from "@/lib/mock-data";
+import type { AnalyticsActiveFilters } from "@/lib/data-types";
 
 export default function CampaignsReportPage() {
-  const [query, setQuery] = useState("");
-  const analytics = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
+  const analytics = useAnalyticsData(filters);
   const campaigns = analytics?.topCampaigns ?? topCampaigns;
-  const filteredCampaigns = useMemo(() => {
-    const value = query.trim().toLowerCase();
-    if (!value) return campaigns;
-    return campaigns.filter((campaign) => campaign.name.toLowerCase().includes(value));
-  }, [campaigns, query]);
   const adsCost = analytics?.totals.adsCost ?? 116230000;
   const roas = analytics?.totals.roas ?? 6.4;
 
@@ -25,15 +22,21 @@ export default function CampaignsReportPage() {
           <p className="mt-1 text-sm text-gray-500">Theo dõi chi phí quảng cáo, doanh thu và ROAS từng campaign.</p>
         </div>
         <div className="relative w-72">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={filters.campaign ?? ""}
+            onChange={(event) => setFilters((current) => ({ ...current, campaign: event.target.value || undefined }))}
             placeholder="Tìm campaign..."
-            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
       </div>
+
+      <AnalyticsFilterBar
+        filters={filters}
+        options={analytics?.availableFilters}
+        recordCount={analytics?.recordCount}
+        onChange={setFilters}
+      />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
@@ -74,7 +77,7 @@ export default function CampaignsReportPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredCampaigns.map((campaign) => (
+              {campaigns.map((campaign) => (
                 <tr key={`${campaign.rank}-${campaign.name}`} className="hover:bg-gray-50/60">
                   <td className="px-4 py-3 font-semibold text-gray-400">{campaign.rank}</td>
                   <td className="px-4 py-3 font-semibold text-gray-800">{campaign.name}</td>
@@ -83,7 +86,7 @@ export default function CampaignsReportPage() {
                   <td className="px-4 py-3 text-right font-bold text-gray-950">{campaign.roas}x</td>
                 </tr>
               ))}
-              {filteredCampaigns.length === 0 && (
+              {campaigns.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
                     Không tìm thấy campaign phù hợp.

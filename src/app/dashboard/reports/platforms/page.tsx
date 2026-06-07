@@ -1,11 +1,15 @@
 "use client";
 
 import { Globe, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import AnalyticsFilterBar from "@/components/dashboard/AnalyticsFilterBar";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { channelRevenue } from "@/lib/mock-data";
+import type { AnalyticsActiveFilters } from "@/lib/data-types";
 
 export default function PlatformsReportPage() {
-  const analytics = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
+  const analytics = useAnalyticsData(filters);
   const channels = analytics?.channelRevenue ?? channelRevenue;
   const total = analytics?.totals.revenue ?? channels.reduce((sum, item) => sum + item.value, 0);
 
@@ -15,6 +19,13 @@ export default function PlatformsReportPage() {
         <h1 className="text-2xl font-bold text-gray-900">Báo cáo theo nền tảng</h1>
         <p className="mt-1 text-sm text-gray-500">So sánh doanh thu và tỷ trọng giữa các kênh bán hàng.</p>
       </div>
+
+      <AnalyticsFilterBar
+        filters={filters}
+        options={analytics?.availableFilters}
+        recordCount={analytics?.recordCount}
+        onChange={setFilters}
+      />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {channels.map((channel) => (

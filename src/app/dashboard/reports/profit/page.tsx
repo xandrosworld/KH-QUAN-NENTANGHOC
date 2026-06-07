@@ -1,6 +1,8 @@
 'use client';
 
-import { Calendar, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
+import { useState } from 'react';
+import AnalyticsFilterBar from '@/components/dashboard/AnalyticsFilterBar';
 import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
@@ -12,6 +14,7 @@ import {
   channelProfits,
   profitDetailRows,
 } from '@/lib/mock-data';
+import type { AnalyticsActiveFilters } from '@/lib/data-types';
 
 const profitColumns = [
   { key: 'rank', label: '#' },
@@ -28,7 +31,8 @@ const profitColumns = [
 ];
 
 export default function ProfitReportPage() {
-  const analytics = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
+  const analytics = useAnalyticsData(filters);
   const kpis = analytics?.profitKpis ?? profitKpis;
   const chartData = analytics?.profitChartData ?? profitChartData;
   const costs = analytics?.costStructure ?? costStructure;
@@ -55,13 +59,19 @@ export default function ProfitReportPage() {
               Phân tích chi tiết lợi nhuận và cơ cấu chi phí
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden">
             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600">
-              <Calendar size={16} />
               Tất cả thời gian
             </div>
           </div>
         </div>
+
+        <AnalyticsFilterBar
+          filters={filters}
+          options={analytics?.availableFilters}
+          recordCount={analytics?.recordCount}
+          onChange={setFilters}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {kpis.map((kpi) => (

@@ -1,6 +1,8 @@
 'use client';
 
-import { Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useState } from 'react';
+import AnalyticsFilterBar from '@/components/dashboard/AnalyticsFilterBar';
 import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
@@ -11,6 +13,7 @@ import {
   channelRevenue,
   revenueDetailRows,
 } from '@/lib/mock-data';
+import type { AnalyticsActiveFilters } from '@/lib/data-types';
 import type { ChannelRevenue } from '@/lib/types';
 
 const columns = [
@@ -29,6 +32,8 @@ function formatVnd(value: number) {
 }
 
 function getDonutGradient(data: ChannelRevenue[]) {
+  if (data.length === 0) return '#f3f4f6';
+
   let cursor = 0;
 
   return `conic-gradient(${data
@@ -42,7 +47,8 @@ function getDonutGradient(data: ChannelRevenue[]) {
 }
 
 export default function RevenueReportPage() {
-  const analytics = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
+  const analytics = useAnalyticsData(filters);
   const kpis = analytics?.revenueKpis ?? revenueKpis;
   const timeData = analytics?.revenueByTimeData ?? revenueByTimeData;
   const channelData = analytics?.channelRevenue ?? channelRevenue;
@@ -57,13 +63,19 @@ export default function RevenueReportPage() {
             <h1 className="text-2xl font-bold text-gray-900">Báo cáo doanh thu</h1>
             <p className="text-sm text-gray-500 mt-1">Phân tích chi tiết doanh thu theo thời gian, kênh bán hàng</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden">
             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600">
-              <Calendar size={16} />
               Tất cả thời gian
             </div>
           </div>
         </div>
+
+        <AnalyticsFilterBar
+          filters={filters}
+          options={analytics?.availableFilters}
+          recordCount={analytics?.recordCount}
+          onChange={setFilters}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {kpis.map((kpi) => (

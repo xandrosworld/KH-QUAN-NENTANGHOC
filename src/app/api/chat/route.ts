@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { buildAnalytics } from '@/lib/server/analytics';
 import { getActiveRecords } from '@/lib/server/data-store';
+import { askGeminiWithAnalytics, hasGeminiConfig } from '@/lib/server/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,20 @@ export async function POST(request: Request) {
 
   if (!message) {
     return NextResponse.json({ answer: 'Bạn muốn xem chỉ số nào: doanh thu, net profit, ROAS, top sản phẩm hay top campaign?' });
+  }
+
+  if (hasGeminiConfig()) {
+    try {
+      const result = await askGeminiWithAnalytics(String(body.message ?? '').trim(), analytics);
+      return NextResponse.json({
+        answer: result.answer,
+        provider: 'gemini',
+        model: result.model,
+        analytics: { totals },
+      });
+    } catch (error) {
+      console.error('Gemini chat failed, falling back to local analytics answer:', error);
+    }
   }
 
   let answer = '';
