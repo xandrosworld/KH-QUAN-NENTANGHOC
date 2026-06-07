@@ -6,6 +6,7 @@ import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import FilterPanel from '@/components/ui/FilterPanel';
 import SvgLineChart from '@/components/ui/SvgLineChart';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import {
   profitKpis,
   profitChartData,
@@ -33,11 +34,17 @@ const profitColumns = [
 export default function ProfitReportPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [filterVisible, setFilterVisible] = useState(false);
+  const analytics = useAnalyticsData();
+  const kpis = analytics?.profitKpis ?? profitKpis;
+  const chartData = analytics?.profitChartData ?? profitChartData;
+  const costs = analytics?.costStructure ?? costStructure;
+  const profits = analytics?.channelProfits ?? channelProfits;
+  const detailRows = analytics?.profitDetailRows ?? profitDetailRows;
   const costRadius = 64;
   const costCircumference = 2 * Math.PI * costRadius;
-  const maxChannelProfit = Math.max(...channelProfits.map((channel) => channel.value));
-  const costSegments = costStructure.map((item, index) => {
-    const offset = costStructure
+  const maxChannelProfit = Math.max(...profits.map((channel) => channel.value), 1);
+  const costSegments = costs.map((item, index) => {
+    const offset = costs
       .slice(0, index)
       .reduce((sum, current) => sum + (current.percentage / 100) * costCircumference, 0);
     const dash = (item.percentage / 100) * costCircumference;
@@ -87,7 +94,7 @@ export default function ProfitReportPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {profitKpis.map((kpi) => (
+          {kpis.map((kpi) => (
             <MetricCard key={kpi.id} {...kpi} />
           ))}
         </div>
@@ -110,7 +117,7 @@ export default function ProfitReportPage() {
             </div>
             <div className="h-64">
               <SvgLineChart
-                data={profitChartData}
+                data={chartData}
                 viewBoxWidth={390}
                 series={[
                   { key: 'doanhThu', color: '#22c55e' },
@@ -149,7 +156,7 @@ export default function ProfitReportPage() {
                 </text>
               </svg>
               <div className="w-full mt-3 space-y-2">
-                {costStructure.map((item) => (
+                {costs.map((item) => (
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
@@ -164,7 +171,7 @@ export default function ProfitReportPage() {
 
           <ChartCard title="Lợi nhuận theo kênh">
             <div className="space-y-4 pt-3">
-              {channelProfits.map((item) => {
+              {profits.map((item) => {
                 const width = `${Math.max((item.value / maxChannelProfit) * 100, 8)}%`;
 
                 return (
@@ -200,7 +207,7 @@ export default function ProfitReportPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {profitDetailRows.map((row) => (
+                {detailRows.map((row) => (
                   <tr key={row.rank} className="hover:bg-gray-50/50">
                     <td className="px-3 py-3 text-gray-400">{row.rank}</td>
                     <td className="px-3 py-3 font-medium text-gray-800">{row.channel}</td>

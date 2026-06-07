@@ -43,7 +43,7 @@ export interface TopCampaign {
 export interface ImportHistoryItem {
   id: string;
   fileName: string;
-  source: 'shopee' | 'tiktok' | 'ads' | 'giavon';
+  source: 'shopee' | 'tiktok' | 'lazada' | 'ads' | 'giavon';
   sourceLabel: string;
   date: string;
   size: string;

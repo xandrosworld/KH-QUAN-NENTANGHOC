@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Search,
   Calendar,
@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { dataManagementRows, fileDetail } from '@/lib/mock-data';
+import type { DataManagementRow, FileDetail } from '@/lib/types';
 
 const tabs = ['Tất cả dữ liệu', 'Shopee', 'TikTok Shop', 'Ads', 'Giá vốn'];
 
@@ -65,6 +66,7 @@ const getSourceIcon = (source: string) => {
   const value = source.toLowerCase();
   if (value.includes('shopee')) return '/brand/source-icons/shopee.png';
   if (value.includes('tiktok')) return '/brand/source-icons/tiktok.png';
+  if (value.includes('lazada')) return '/brand/hero-login-optimized/lazada.webp';
   if (value.includes('ads') || value.includes('facebook') || value.includes('google')) {
     return '/brand/source-icons/ads-facebook.png';
   }
@@ -75,13 +77,43 @@ export default function DataManagementPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedFile, setSelectedFile] = useState<string | null>('1');
   const [detailTab, setDetailTab] = useState(0);
-  const selectedRow = dataManagementRows.find((row) => row.id === selectedFile);
-  const detailFileName = selectedRow?.fileName ?? fileDetail.fileName;
-  const detailSource = selectedRow?.source ?? fileDetail.source;
-  const detailDataType = selectedRow?.dataType ?? fileDetail.dataType;
-  const detailImportedBy = selectedRow?.importedBy ?? fileDetail.importedBy;
-  const detailImportDate = selectedRow?.importDate ?? fileDetail.importDate;
-  const detailDataRows = selectedRow?.dataRows ?? fileDetail.dataRows;
+  const [rows, setRows] = useState<DataManagementRow[]>(dataManagementRows);
+  const [detail, setDetail] = useState<FileDetail>(fileDetail);
+  const [summary, setSummary] = useState({ total: 128, success: 112, error: 8, processing: 8 });
+  const selectedRow = rows.find((row) => row.id === selectedFile);
+  const detailFileName = selectedRow?.fileName ?? detail.fileName;
+  const detailSource = selectedRow?.source ?? detail.source;
+  const detailDataType = selectedRow?.dataType ?? detail.dataType;
+  const detailImportedBy = selectedRow?.importedBy ?? detail.importedBy;
+  const detailImportDate = selectedRow?.importDate ?? detail.importDate;
+  const detailDataRows = selectedRow?.dataRows ?? detail.dataRows;
+  const displaySummaryCards = summaryCards.map((card) => {
+    if (card.label.includes('Tổng file')) return { ...card, value: String(summary.total) };
+    if (card.label.includes('thành công')) return { ...card, value: String(summary.success) };
+    if (card.label.includes('lỗi')) return { ...card, value: String(summary.error) };
+    return { ...card, value: String(summary.processing) };
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/imports')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted || !payload) return;
+        if (payload.rows?.length) {
+          setRows(payload.rows);
+          setSelectedFile(payload.rows[0].id);
+        }
+        if (payload.fileDetail) setDetail(payload.fileDetail);
+        if (payload.summary) setSummary(payload.summary);
+      })
+      .catch(() => {
+        // Keep local mock data as fallback.
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -137,7 +169,7 @@ export default function DataManagementPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {summaryCards.map((card) => (
+            {displaySummaryCards.map((card) => (
               <div
                 key={card.label}
                 className="flex min-h-[112px] items-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-4"
@@ -179,7 +211,7 @@ export default function DataManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {dataManagementRows.map((row) => {
+                {rows.map((row) => {
                   const cfg = statusConfig[row.status];
                   const StatusIcon = cfg.icon;
                   return (
@@ -242,7 +274,7 @@ export default function DataManagementPage() {
             </table>
           </div>
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
-            <span className="text-xs text-gray-500">Hiển thị 1-8 của 128 kết quả</span>
+            <span className="text-xs text-gray-500">Hiển thị 1-{Math.min(rows.length, 8)} của {rows.length} kết quả</span>
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((p) => (
                 <button
@@ -335,16 +367,16 @@ export default function DataManagementPage() {
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Thống kê</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-green-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-green-600">{fileDetail.validRows.toLocaleString()}</p>
-                  <p className="text-xs text-green-600">Hợp lệ ({fileDetail.validPercent})</p>
+                  <p className="text-lg font-bold text-green-600">{detail.validRows.toLocaleString()}</p>
+                  <p className="text-xs text-green-600">Hợp lệ ({detail.validPercent})</p>
                 </div>
                 <div className="bg-red-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-red-600">{fileDetail.errorRows}</p>
-                  <p className="text-xs text-red-600">Lỗi ({fileDetail.errorPercent})</p>
+                  <p className="text-lg font-bold text-red-600">{detail.errorRows}</p>
+                  <p className="text-xs text-red-600">Lỗi ({detail.errorPercent})</p>
                 </div>
               </div>
               <div className="mt-3 text-xs text-gray-500">
-                <p>Phạm vi: {fileDetail.dateRangeFrom} - {fileDetail.dateRangeTo}</p>
+                <p>Phạm vi: {detail.dateRangeFrom} - {detail.dateRangeTo}</p>
               </div>
             </div>
 

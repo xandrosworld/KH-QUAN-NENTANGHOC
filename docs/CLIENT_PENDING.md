@@ -1,6 +1,6 @@
 # Pending Items — Cần khách hàng xác nhận
 
-> Last updated: 2026-06-06
+> Last updated: 2026-06-07
 
 ## 1. File mẫu import
 
@@ -17,46 +17,29 @@ Cần khách gửi file mẫu thực tế (Excel/CSV) cho từng nguồn dữ li
 - Mỗi file mẫu cần có header row + ít nhất 5-10 dòng dữ liệu thật
 - Xác nhận encoding (UTF-8?)
 - Nếu có nhiều sheet, chỉ rõ sheet nào cần import
+- Nếu đang có file `.xls` legacy, xuất lại sang `.xlsx` hoặc `.csv` trước khi gửi
 - Quy tắc xử lý khi import file trùng kỳ (overwrite? merge? reject?)
 
 ## 2. Công thức KPI chính thức
 
-Figma hiển thị: `Giá Profit = Doanh thu - Giá vốn - Chi phí Ads - Phí sàn - Vận chuyển - Phí khác`
+Đã có công thức khách bổ sung và đã đưa vào engine Phase 1:
 
-Cần khách xác nhận chi tiết:
+| KPI | Công thức | Status |
+|-----|-----------|--------|
+| Doanh thu | Tổng giá trị đơn thành công | ✅ Đang áp dụng |
+| Phí sàn | Shopee/TikTok thu | ✅ Đang áp dụng |
+| Hoàn/Hủy | Tổng đơn hoàn + hủy | ✅ Đang áp dụng |
+| Giá vốn | Số lượng bán × giá vốn | ✅ Đang áp dụng |
+| Ads | Tổng chi phí quảng cáo | ✅ Đang áp dụng |
+| Gross Profit | Doanh thu - Giá vốn | ✅ Đang áp dụng |
+| Net Profit | Doanh thu - Giá vốn - Ads - Phí sàn - Hoàn/Hủy | ✅ Đang áp dụng |
+| Margin | Net Profit / Doanh thu × 100 | ✅ Đang áp dụng |
+| ROAS | Doanh thu / Chi phí Ads | ✅ Đang áp dụng |
+| CPA | Chi phí Ads / Số đơn | ✅ Đang áp dụng |
 
-| KPI | Câu hỏi | Status |
-|-----|---------|--------|
-| **Doanh thu** | Doanh thu gộp hay đã trừ hoàn? Tính trước hay sau VAT? | ❌ Chờ xác nhận |
-| **Giá vốn (COGS)** | Tính theo giá vốn trung bình hay FIFO? Có gồm chi phí kho? | ❌ Chờ xác nhận |
-| **Chi phí Ads** | Gộp tất cả nền tảng (FB + TikTok + Google) hay tách riêng? | ❌ Chờ xác nhận |
-| **Phí sàn** | Bao gồm phí giao dịch + phí payment gateway? | ❌ Chờ xác nhận |
-| **Vận chuyển** | Phí ship do shop trả hay bao gồm cả phần khách trả? | ❌ Chờ xác nhận |
-| **Phí khác** | Cụ thể gồm những khoản nào? | ❌ Chờ xác nhận |
-| **Lợi nhuận gộp** | = Doanh thu - Giá vốn? Hay trừ thêm phí sàn? | ❌ Chờ xác nhận |
-| **Net Profit** | = Doanh thu - tất cả chi phí? Xác nhận công thức cuối | ❌ Chờ xác nhận |
-| **ROAS** | = Doanh thu / Chi phí Ads? Theo từng kênh hay tổng? | ❌ Chờ xác nhận |
-| **AOV** | = Doanh thu / Số đơn hàng? Tính đơn hoàn không? | ❌ Chờ xác nhận |
-| **Tỷ lệ hoàn** | = Đơn hoàn / Tổng đơn? Theo số lượng hay giá trị? | ❌ Chờ xác nhận |
-| **Biên LN gộp** | = Lợi nhuận gộp / Doanh thu × 100%? | ❌ Chờ xác nhận |
-| **Biên LN ròng** | = Net Profit / Doanh thu × 100%? | ❌ Chờ xác nhận |
+## 3. Màn hình
 
-## 3. Màn hình còn placeholder
-
-Các màn sau có Figma PNG reference nhưng chưa được implement chi tiết (hiện hiển thị "Đang phát triển"):
-
-| Màn hình | Figma file | Ưu tiên |
-|----------|-----------|---------|
-| Báo cáo sản phẩm | BC_SanPham.png | Cao |
-| Báo cáo campaign | BC_Campaign.png | Cao |
-| Báo cáo theo nền tảng | BC_NenTang.png | Trung bình |
-| Quản lý dữ liệu | Dashboard_QuanLyDuLieu.png | Trung bình |
-| Cài đặt công thức/KPI | CaiDat_CongThuc.png | Trung bình |
-| Quản lý shop/nền tảng | QuanLy_Shop.png | Trung bình |
-| Cài đặt hệ thống | CaiDat_HeThong.png | Thấp |
-| Quên mật khẩu | QuenMK.png | Thấp |
-| Xác nhận mã | MaQuenMK.png | Thấp |
-| Đặt lại mật khẩu | DatLaiMK.png | Thấp |
+Các màn dashboard/import/data-management/reports/settings chính đã có UI chạy được. Không còn trang báo cáo/cài đặt chính hiển thị "Đang phát triển".
 
 ## 4. Known Gaps (UI)
 

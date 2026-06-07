@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { importHistory } from "@/lib/mock-data";
 import { formatFileSize, getDroppedFile, validateFile } from "@/lib/file-utils";
+import type { ImportHistoryItem } from "@/lib/types";
 
 const sources = [
   {
@@ -61,6 +62,7 @@ const statusConfig = {
 const sourceIconMap = {
   shopee: "/brand/source-icons/shopee.png",
   tiktok: "/brand/source-icons/tiktok.png",
+  lazada: "/brand/hero-login-optimized/lazada.webp",
   ads: "/brand/source-icons/ads-facebook.png",
   giavon: "/brand/source-icons/cogs.png",
 };
@@ -69,17 +71,89 @@ export default function ImportPage() {
   const [selectedSource, setSelectedSource] = useState("shopee");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [historyItems, setHistoryItems] = useState<ImportHistoryItem[]>(importHistory);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadImportHistory = useCallback(async () => {
+    try {
+      const response = await fetch("/api/imports");
+      if (!response.ok) return;
+      const payload = await response.json();
+      const items: ImportHistoryItem[] = payload.jobs.map((job: {
+        id: string;
+        fileName: string;
+        source: ImportHistoryItem["source"];
+        sourceLabel: string;
+        importedAt: string;
+        fileSize: number;
+        validRows: number;
+        dataType: string;
+        status: ImportHistoryItem["status"];
+      }) => ({
+        id: job.id,
+        fileName: job.fileName,
+        source: job.source,
+        sourceLabel: job.sourceLabel || job.dataType,
+        date: new Date(job.importedAt).toLocaleString("vi-VN"),
+        size: formatFileSize(job.fileSize),
+        records: `${job.validRows.toLocaleString("vi-VN")} dòng`,
+        status: job.status,
+      }));
+      if (items.length) setHistoryItems(items);
+    } catch {
+      // Keep mock history as graceful fallback for demo.
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/imports")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted || !payload) return;
+        const items: ImportHistoryItem[] = payload.jobs.map((job: {
+          id: string;
+          fileName: string;
+          source: ImportHistoryItem["source"];
+          sourceLabel: string;
+          importedAt: string;
+          fileSize: number;
+          validRows: number;
+          dataType: string;
+          status: ImportHistoryItem["status"];
+        }) => ({
+          id: job.id,
+          fileName: job.fileName,
+          source: job.source,
+          sourceLabel: job.sourceLabel || job.dataType,
+          date: new Date(job.importedAt).toLocaleString("vi-VN"),
+          size: formatFileSize(job.fileSize),
+          records: `${job.validRows.toLocaleString("vi-VN")} dòng`,
+          status: job.status,
+        }));
+        if (items.length) setHistoryItems(items);
+      })
+      .catch(() => {
+        // Keep mock history as graceful fallback for demo.
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const validateAndSetFile = useCallback((file: File) => {
     const result = validateFile(file);
     if (!result.valid) {
       setFileError(result.error);
+      setImportMessage(null);
       setSelectedFile(null);
       return;
     }
     setFileError(null);
+    setImportMessage(null);
     setSelectedFile(file);
   }, []);
 
@@ -112,6 +186,43 @@ export default function ImportPage() {
     [validateAndSetFile]
   );
 
+  const handleImportSubmit = useCallback(async () => {
+    if (!selectedFile) {
+      setFileError("Vui lòng chọn file trước khi import.");
+      return;
+    }
+
+    setIsImporting(true);
+    setImportMessage(null);
+    setFileError(null);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("source", selectedSource);
+    formData.append("importedBy", "Nguyễn Văn A");
+
+    try {
+      const response = await fetch("/api/imports", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setFileError(payload.error ?? "Import thất bại. Vui lòng kiểm tra lại file.");
+        return;
+      }
+
+      setImportMessage(`Import thành công ${Number(payload.recordsImported ?? 0).toLocaleString("vi-VN")} dòng dữ liệu.`);
+      setSelectedFile(null);
+      await loadImportHistory();
+    } catch {
+      setFileError("Không kết nối được API import. Vui lòng thử lại.");
+    } finally {
+      setIsImporting(false);
+    }
+  }, [loadImportHistory, selectedFile, selectedSource]);
+
   return (
     <div className="space-y-5">
       <div>
@@ -124,7 +235,7 @@ export default function ImportPage() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".xlsx,.xls,.csv"
+        accept=".xlsx,.csv"
         className="hidden"
         onChange={handleFileInputChange}
       />
@@ -135,10 +246,18 @@ export default function ImportPage() {
             {steps.map((step, index) => (
               <div key={step.num} className="flex flex-1 items-center">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                      index === 0 ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"
+                    }`}
+                  >
                     {step.num}
                   </div>
-                  <span className="whitespace-pre-line text-sm font-medium leading-tight text-gray-900">
+                  <span
+                    className={`whitespace-pre-line text-sm font-medium leading-tight ${
+                      index === 0 ? "text-gray-900" : "text-gray-400"
+                    }`}
+                  >
                     {step.label}
                   </span>
                 </div>
@@ -213,7 +332,7 @@ export default function ImportPage() {
           <section className="border-b border-gray-200 p-5">
             <h2 className="text-base font-bold text-gray-950">2. Upload file</h2>
             <p className="mt-1 text-sm italic text-gray-600">
-              Hỗ trợ định dạng Excel (xlsx, xls) và CSV (csv)
+              Hỗ trợ định dạng Excel (xlsx) và CSV (csv)
             </p>
 
             <div
@@ -260,11 +379,41 @@ export default function ImportPage() {
                   onClick={() => {
                     setSelectedFile(null);
                     setFileError(null);
+                    setImportMessage(null);
                   }}
                   className="shrink-0 p-1 text-gray-400 transition hover:text-red-500"
                 >
                   <X size={16} />
                 </button>
+              </div>
+            )}
+
+            {selectedFile && !fileError && (
+              <div className="mt-4 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setImportMessage(null);
+                  }}
+                  className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleImportSubmit}
+                  disabled={isImporting}
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isImporting && <Loader2 size={16} className="animate-spin" />}
+                  {isImporting ? "Đang import..." : "Import dữ liệu"}
+                </button>
+              </div>
+            )}
+
+            {importMessage && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
+                <CheckCircle2 size={16} className="shrink-0 text-green-600" />
+                <p className="text-sm font-medium text-green-700">{importMessage}</p>
               </div>
             )}
           </section>
@@ -312,7 +461,7 @@ export default function ImportPage() {
           </div>
 
           <div className="space-y-0">
-            {importHistory.map((item) => {
+            {historyItems.map((item) => {
               const cfg = statusConfig[item.status];
               return (
                 <div key={item.id} className="border-b border-gray-100 py-4 last:border-b-0">

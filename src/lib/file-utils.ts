@@ -4,7 +4,7 @@
 
 import type { FileValidationResult } from './import-types';
 
-const DEFAULT_ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const DEFAULT_ALLOWED_EXTENSIONS = ['.xlsx', '.csv'];
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 /**
@@ -34,7 +34,7 @@ export function getFileExtension(fileName: string): string {
  * Validate a File object for extension and size.
  *
  * @param file - The File to validate
- * @param allowedExtensions - Array of extensions like ['.xlsx', '.csv']. Defaults to xlsx/xls/csv.
+ * @param allowedExtensions - Array of extensions like ['.xlsx', '.csv']. Defaults to xlsx/csv.
  * @param maxSize - Max file size in bytes. Defaults to 50MB.
  * @returns FileValidationResult with valid flag, error message, and formatted size.
  */

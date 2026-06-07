@@ -126,30 +126,21 @@ export interface ImportJob {
 }
 
 // ────────────────────────────────────────────────────────────
-// KPI formulas — PENDING CLIENT CONFIRMATION
+// KPI formulas — PHASE 1
 // ────────────────────────────────────────────────────────────
 
 /**
- * KPI công thức tính — CHƯA XÁC NHẬN
+ * KPI công thức tính Phase 1.
  *
- * Các công thức dưới đây là placeholder. Cần chờ khách xác nhận:
- * 1. Công thức tính Lợi nhuận gộp
- * 2. Cách phân bổ chi phí vận chuyển
- * 3. Cách tính Net Profit (trừ những khoản nào)
- * 4. ROAS tính theo chi phí Ads nào (Facebook? TikTok? Tổng?)
- * 5. Cách xử lý hoàn hàng trong doanh thu
- *
- * Reference: Figma "Công thức lợi nhuận đang áp dụng" panel
- * shows: Giá Profit = Doanh thu - Giá vốn - Chi phí Ads - Phí sàn - Vận chuyển - Phí khác
- * But this needs client sign-off on exact definitions.
+ * Công thức đã được đưa vào engine tính toán ở `server/analytics.ts`.
+ * Khi khách gửi file mẫu, phần còn lại là khóa column mapping theo header thực tế.
  */
 export interface KpiFormulaConfig {
   id: string;
   name: string;
   /**
-   * TODO: Actual formula expression or calculation function
-   * Chờ file mẫu và công thức khách xác nhận.
+   * Formula expression shown in the KPI settings screen.
    */
-  formula: string; // placeholder — e.g. "doanhThu - giaVon - chiPhiAds - phiSan - vanChuyen - phiKhac"
+  formula: string;
   description: string;
 }

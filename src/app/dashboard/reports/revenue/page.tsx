@@ -6,12 +6,14 @@ import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import FilterPanel from '@/components/ui/FilterPanel';
 import SvgLineChart from '@/components/ui/SvgLineChart';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import {
   revenueKpis,
   revenueByTimeData,
   channelRevenue,
   revenueDetailRows,
 } from '@/lib/mock-data';
+import type { ChannelRevenue } from '@/lib/types';
 
 const subTabs = ['Tổng quan', 'Theo thời gian', 'Theo kênh', 'Theo shop', 'Theo sản phẩm', 'Theo danh mục'];
 
@@ -30,10 +32,10 @@ function formatVnd(value: number) {
   return `${value.toLocaleString('vi-VN')} đ`;
 }
 
-function getDonutGradient() {
+function getDonutGradient(data: ChannelRevenue[]) {
   let cursor = 0;
 
-  return `conic-gradient(${channelRevenue
+  return `conic-gradient(${data
     .map((item) => {
       const start = cursor;
       const end = cursor + item.percentage * 3.6;
@@ -46,7 +48,12 @@ function getDonutGradient() {
 export default function RevenueReportPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [filterVisible, setFilterVisible] = useState(false);
-  const total = 1234567000;
+  const analytics = useAnalyticsData();
+  const kpis = analytics?.revenueKpis ?? revenueKpis;
+  const timeData = analytics?.revenueByTimeData ?? revenueByTimeData;
+  const channelData = analytics?.channelRevenue ?? channelRevenue;
+  const detailRows = analytics?.revenueDetailRows ?? revenueDetailRows;
+  const total = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
   const legendColumns = { gridTemplateColumns: 'minmax(90px, 1fr) 42px 142px' };
 
   return (
@@ -89,7 +96,7 @@ export default function RevenueReportPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {revenueKpis.map((kpi) => (
+          {kpis.map((kpi) => (
             <MetricCard key={kpi.id} {...kpi} />
           ))}
         </div>
@@ -98,7 +105,7 @@ export default function RevenueReportPage() {
           <ChartCard title="Doanh thu theo thời gian">
             <div className="h-72">
               <SvgLineChart
-                data={revenueByTimeData}
+                data={timeData}
                 series={[
                   { key: 'doanhThu', color: '#22c55e' },
                   { key: 'loiNhuan', color: '#94a3b8', dashed: true },
@@ -111,7 +118,7 @@ export default function RevenueReportPage() {
             <div className="flex items-center gap-5">
               <div
                 className="relative mx-auto flex-none rounded-full"
-                style={{ width: 176, height: 176, background: getDonutGradient(), transform: 'rotate(-90deg)' }}
+                style={{ width: 176, height: 176, background: getDonutGradient(channelData), transform: 'rotate(-90deg)' }}
               >
                 <div
                   className="absolute rounded-full bg-white"
@@ -129,7 +136,7 @@ export default function RevenueReportPage() {
                   <span className="text-right">Doanh thu</span>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {channelRevenue.map((ch) => (
+                  {channelData.map((ch) => (
                     <div
                       key={ch.name}
                       className="grid items-center gap-2 py-3 text-sm"
@@ -185,7 +192,7 @@ export default function RevenueReportPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {revenueDetailRows.map((row) => (
+                {detailRows.map((row) => (
                   <tr key={row.rank} className="hover:bg-gray-50/50">
                     <td className="px-4 py-3 text-center text-gray-400">{row.rank}</td>
                     <td className="px-4 py-3 text-gray-700">{row.date}</td>

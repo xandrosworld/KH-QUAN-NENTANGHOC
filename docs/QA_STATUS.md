@@ -1,6 +1,6 @@
 # QA Status — TronX AI Dashboard
 
-> Last updated: 2026-06-06 (QA Round 3 acceptance)
+> Last updated: 2026-06-07 (Phase 1 backend/UI pass)
 
 ## Accepted UI Screens
 
@@ -11,6 +11,13 @@
 | `/dashboard/import` | Import dữ liệu | ✅ Accepted | Stepper, source select, upload, file validation |
 | `/dashboard/reports/revenue` | Báo cáo doanh thu | ✅ Accepted | KPIs, charts, detail table |
 | `/dashboard/reports/profit` | Báo cáo lợi nhuận | ✅ Accepted | KPIs, 3 charts, detail table |
+| `/dashboard/reports/products` | Báo cáo sản phẩm | ✅ Implemented | KPI cards + top product table |
+| `/dashboard/reports/campaigns` | Báo cáo campaign | ✅ Implemented | Ads KPI + top campaign table |
+| `/dashboard/reports/platforms` | Báo cáo theo nền tảng | ✅ Implemented | Channel cards + revenue share |
+| `/dashboard/data-management` | Quản lý dữ liệu | ✅ Implemented | Summary, import table, detail panel |
+| `/dashboard/settings/kpi` | Cài đặt công thức/KPI | ✅ Implemented | Phase 1 formulas |
+| `/dashboard/settings/shops` | Quản lý shop/nền tảng | ✅ Implemented | Import/API source status |
+| `/dashboard/settings/system` | Cài đặt hệ thống | ✅ Implemented | Phase 1 system status |
 
 ## Known Gaps (vs Figma)
 
@@ -24,22 +31,22 @@
 | Profit | KPI cards có 6 cards (Figma), hiện có 6 cards nhưng data khác | Medium | Cần khách xác nhận KPI definitions |
 | Import | Mock history data khác Figma (tên file, ngày tháng) | Low | Data sẽ thay bằng real data khi có backend |
 
-## Placeholder Screens (chưa có design chi tiết)
+## Backend/API Status
 
-| Route | Screen | Status |
-|-------|--------|--------|
-| `/dashboard/data-management` | Quản lý dữ liệu | Placeholder — basic table mock |
-| `/dashboard/reports/products` | Báo cáo sản phẩm | Placeholder — "Đang phát triển" |
-| `/dashboard/reports/campaigns` | Báo cáo campaign | Placeholder — "Đang phát triển" |
-| `/dashboard/reports/platforms` | Báo cáo theo nền tảng | Placeholder — "Đang phát triển" |
-| `/dashboard/settings/kpi` | Cài đặt công thức/KPI | Placeholder — "Đang phát triển" |
-| `/dashboard/settings/shops` | Quản lý shop/nền tảng | Placeholder — "Đang phát triển" |
-| `/dashboard/settings/system` | Cài đặt hệ thống | Placeholder — "Đang phát triển" |
-| `/forgot-password` | Quên mật khẩu | Placeholder — basic form |
-| `/verify-code` | Xác nhận mã | Placeholder — basic form |
-| `/reset-password` | Đặt lại mật khẩu | Placeholder — basic form |
+| API | Status | Notes |
+|-----|--------|-------|
+| `GET /api/analytics` | ✅ Implemented | Tính KPI/dashboard từ imported records hoặc seed fallback |
+| `GET /api/imports` | ✅ Implemented | Trả lịch sử import + summary + detail |
+| `POST /api/imports` | ✅ Implemented | Nhận `.csv/.xlsx/.xls`, parse và normalize theo source |
+| `POST /api/chat` | ✅ Implemented | Trả lời data-aware theo analytics hiện tại |
 
-Figma có export PNG cho: BC_Campaign, BC_NenTang, BC_SanPham, CaiDat_CongThuc, CaiDat_HeThong, Dashboard_QuanLyDuLieu, QuanLy_Shop, QuenMK, MaQuenMK, DatLaiMK. Sẽ implement khi chuyển sang phase tương ứng.
+## Remaining Non-blocking Items
+
+| Item | Status |
+|------|--------|
+| File mẫu khách hàng | ⏳ Chờ khách gửi để khóa mapping header thực tế |
+| AI provider key | ⏳ Chờ cấu hình tài khoản/API key nếu muốn dùng model bên thứ ba |
+| API realtime/connect shop | ⏭️ Phase sau / scope bổ sung |
 
 ## Technical Debt
 
@@ -62,16 +69,20 @@ Figma có export PNG cho: BC_Campaign, BC_NenTang, BC_SanPham, CaiDat_CongThuc, 
 ## Pending Client Confirmation
 
 ### KPI Formulas
-Các công thức tính KPI cần khách xác nhận:
+Công thức Phase 1 đã đưa vào engine:
 
-| KPI | Pending |
+| KPI | Formula |
 |-----|---------|
-| Lợi nhuận gộp | Công thức: Doanh thu - Giá vốn - ? |
-| Net Profit | Trừ những khoản nào? Giá vốn + Ads + Phí sàn + Vận chuyển + Phí khác? |
-| ROAS | Tính theo chi phí Ads nào? (Facebook? TikTok? Tổng?) |
-| AOV | Average Order Value — confirm calculation |
-| Tỷ lệ hoàn | Cách tính tỷ lệ hoàn hàng |
-| Biên LN gộp / Biên LN ròng | Confirm denominator |
+| Doanh thu | Tổng giá trị đơn thành công |
+| Phí sàn | Shopee/TikTok thu |
+| Hoàn/Hủy | Tổng đơn hoàn + hủy |
+| Giá vốn | Số lượng bán × giá vốn |
+| Ads | Tổng chi phí quảng cáo |
+| Gross Profit | Doanh thu - Giá vốn |
+| Net Profit | Doanh thu - Giá vốn - Ads - Phí sàn - Hoàn/Hủy |
+| Margin | Net Profit / Doanh thu × 100 |
+| ROAS | Doanh thu / Chi phí Ads |
+| CPA | Chi phí Ads / Số đơn |
 
 ### Data Import
 Cần khách cung cấp:

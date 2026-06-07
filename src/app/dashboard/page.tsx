@@ -3,6 +3,7 @@
 import { Calendar, ChevronRight, BarChart3, Camera, Download, ChevronDown } from 'lucide-react';
 import MetricCard from '@/components/ui/MetricCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import {
   dashboardKpis,
   revenueChartData,
@@ -10,8 +11,9 @@ import {
   topProducts,
   topCampaigns,
 } from '@/lib/mock-data';
+import type { ChannelRevenue, ChartDataPoint, TopCampaign, TopProduct } from '@/lib/types';
 
-function RevenueChart() {
+function RevenueChart({ data }: { data: ChartDataPoint[] }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -44,7 +46,7 @@ function RevenueChart() {
       </div>
       <div className="h-60">
         <SvgLineChart
-          data={revenueChartData}
+          data={data}
           series={[
             { key: 'doanhThu', color: '#16a34a' },
             { key: 'loiNhuan', color: '#3b82f6' },
@@ -59,10 +61,10 @@ function formatVnd(value: number) {
   return `${value.toLocaleString('vi-VN')} đ`;
 }
 
-function getDonutGradient() {
+function getDonutGradient(data: ChannelRevenue[]) {
   let cursor = 0;
 
-  return `conic-gradient(${channelRevenue
+  return `conic-gradient(${data
     .map((item) => {
       const start = cursor;
       const end = cursor + item.percentage * 3.6;
@@ -72,8 +74,7 @@ function getDonutGradient() {
     .join(', ')})`;
 }
 
-function ChannelDonut() {
-  const total = 1234567000;
+function ChannelDonut({ data, total }: { data: ChannelRevenue[]; total: number }) {
   const legendColumns = { gridTemplateColumns: 'minmax(80px, 1fr) 40px 142px' };
 
   return (
@@ -89,7 +90,7 @@ function ChannelDonut() {
       <div className="flex items-center gap-4">
         <div
           className="relative flex-none rounded-full"
-          style={{ width: 156, height: 156, background: getDonutGradient(), transform: 'rotate(-90deg)' }}
+          style={{ width: 156, height: 156, background: getDonutGradient(data), transform: 'rotate(-90deg)' }}
         >
           <div
             className="absolute rounded-full bg-white"
@@ -108,7 +109,7 @@ function ChannelDonut() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {channelRevenue.map((ch) => (
+            {data.map((ch) => (
               <div
                 key={ch.name}
                 className="grid items-center gap-2 py-3 text-sm"
@@ -145,7 +146,7 @@ function ChannelDonut() {
   );
 }
 
-function TopProductsTable() {
+function TopProductsTable({ products }: { products: TopProduct[] }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -167,7 +168,7 @@ function TopProductsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {topProducts.map((p) => (
+            {products.map((p) => (
               <tr key={p.rank} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-3 py-3 text-gray-400 font-medium">{p.rank}</td>
                 <td className="px-3 py-3 font-medium text-gray-800">{p.name}</td>
@@ -183,7 +184,7 @@ function TopProductsTable() {
   );
 }
 
-function TopCampaignsTable() {
+function TopCampaignsTable({ campaigns }: { campaigns: TopCampaign[] }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -205,7 +206,7 @@ function TopCampaignsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {topCampaigns.map((c) => (
+            {campaigns.map((c) => (
               <tr key={c.rank} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-3 py-3 text-gray-400 font-medium">{c.rank}</td>
                 <td className="px-3 py-3 font-medium text-gray-800">{c.name}</td>
@@ -222,6 +223,14 @@ function TopCampaignsTable() {
 }
 
 export default function DashboardPage() {
+  const analytics = useAnalyticsData();
+  const kpis = analytics?.dashboardKpis ?? dashboardKpis;
+  const chartData = analytics?.revenueChartData ?? revenueChartData;
+  const channelData = analytics?.channelRevenue ?? channelRevenue;
+  const productRows = analytics?.topProducts ?? topProducts;
+  const campaignRows = analytics?.topCampaigns ?? topCampaigns;
+  const totalRevenue = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -250,21 +259,21 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {dashboardKpis.map((kpi) => (
+        {kpis.map((kpi) => (
           <MetricCard key={kpi.id} {...kpi} />
         ))}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <RevenueChart />
-        <ChannelDonut />
+        <RevenueChart data={chartData} />
+        <ChannelDonut data={channelData} total={totalRevenue} />
       </div>
 
       {/* Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <TopProductsTable />
-        <TopCampaignsTable />
+        <TopProductsTable products={productRows} />
+        <TopCampaignsTable campaigns={campaignRows} />
       </div>
     </div>
   );
