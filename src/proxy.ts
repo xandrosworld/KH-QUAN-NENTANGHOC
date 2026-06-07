@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const SESSION_COOKIE = 'tronx_session';
-const protectedApiPrefixes = ['/api/analytics', '/api/imports', '/api/chat'];
+const protectedApiPrefixes = ['/api/account', '/api/analytics', '/api/imports', '/api/chat'];
 
 function hasSession(request: NextRequest) {
   return request.cookies.get(SESSION_COOKIE)?.value === 'phase1-admin';
@@ -35,5 +35,12 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/api/analytics/:path*', '/api/imports/:path*', '/api/chat/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/login',
+    '/api/account/:path*',
+    '/api/analytics/:path*',
+    '/api/imports/:path*',
+    '/api/chat/:path*',
+  ],
 };

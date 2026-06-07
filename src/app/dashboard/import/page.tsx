@@ -83,6 +83,7 @@ export default function ImportPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyItems, setHistoryItems] = useState<ImportHistoryItem[]>(importHistory);
   const [isDragging, setIsDragging] = useState(false);
+  const [importedByName, setImportedByName] = useState("Nguyễn Văn A");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadImportHistory = useCallback(async () => {
@@ -152,6 +153,31 @@ export default function ImportPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/account")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted || !payload?.profile?.name) return;
+        setImportedByName(payload.profile.name);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleProfileUpdated = (event: Event) => {
+      const profile = (event as CustomEvent<{ name?: string }>).detail;
+      if (profile?.name) setImportedByName(profile.name);
+    };
+
+    window.addEventListener("tronx-profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("tronx-profile-updated", handleProfileUpdated);
+  }, []);
+
   const validateAndSetFile = useCallback((file: File) => {
     const result = validateFile(file);
     if (!result.valid) {
@@ -207,7 +233,7 @@ export default function ImportPage() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("source", selectedSource);
-    formData.append("importedBy", "Nguyễn Văn A");
+    formData.append("importedBy", importedByName);
 
     try {
       const response = await fetch("/api/imports", {
@@ -229,7 +255,7 @@ export default function ImportPage() {
     } finally {
       setIsImporting(false);
     }
-  }, [loadImportHistory, selectedFile, selectedSource]);
+  }, [importedByName, loadImportHistory, selectedFile, selectedSource]);
 
   return (
     <div className="space-y-5">

@@ -1,24 +1,14 @@
 import { NextResponse } from 'next/server';
+import { verifyAdminCredential } from '@/lib/server/account-store';
 
 const SESSION_COOKIE = 'tronx_session';
-
-function isValidCredential(email: string, password: string) {
-  const configuredEmail = process.env.TRONX_ADMIN_EMAIL ?? 'admin@tronx.vn';
-  const configuredPassword = process.env.TRONX_ADMIN_PASSWORD ?? 'admin123';
-  const normalizedEmail = email.trim().toLowerCase();
-
-  return (
-    (normalizedEmail === configuredEmail.toLowerCase() || normalizedEmail === 'admin') &&
-    password === configuredPassword
-  );
-}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const email = String(body.email ?? '');
   const password = String(body.password ?? '');
 
-  if (!isValidCredential(email, password)) {
+  if (!(await verifyAdminCredential(email, password))) {
     return NextResponse.json({ error: 'Email hoặc mật khẩu không đúng.' }, { status: 401 });
   }
 

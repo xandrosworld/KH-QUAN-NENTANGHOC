@@ -1,6 +1,7 @@
 'use client';
 
 import { Calendar, ChevronRight, BarChart3, Camera, Download, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import MetricCard from '@/components/ui/MetricCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
@@ -224,6 +225,7 @@ function TopCampaignsTable({ campaigns }: { campaigns: TopCampaign[] }) {
 
 export default function DashboardPage() {
   const analytics = useAnalyticsData();
+  const [adminName, setAdminName] = useState('Nguyễn Văn A');
   const kpis = analytics?.dashboardKpis ?? dashboardKpis;
   const chartData = analytics?.revenueChartData ?? revenueChartData;
   const channelData = analytics?.channelRevenue ?? channelRevenue;
@@ -231,13 +233,38 @@ export default function DashboardPage() {
   const campaignRows = analytics?.topCampaigns ?? topCampaigns;
   const totalRevenue = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
 
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/account')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted || !payload?.profile?.name) return;
+        setAdminName(payload.profile.name);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleProfileUpdated = (event: Event) => {
+      const profile = (event as CustomEvent<{ name?: string }>).detail;
+      if (profile?.name) setAdminName(profile.name);
+    };
+
+    window.addEventListener('tronx-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('tronx-profile-updated', handleProfileUpdated);
+  }, []);
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Chào mừng trở lại, Nguyễn Văn A! 👋
+            Chào mừng trở lại, {adminName}!
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Tổng quan tình hình kinh doanh của bạn
