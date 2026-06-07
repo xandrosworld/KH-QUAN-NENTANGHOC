@@ -1,12 +1,19 @@
 "use client";
 
 import { Megaphone, Search, Target, TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { topCampaigns } from "@/lib/mock-data";
 
 export default function CampaignsReportPage() {
+  const [query, setQuery] = useState("");
   const analytics = useAnalyticsData();
   const campaigns = analytics?.topCampaigns ?? topCampaigns;
+  const filteredCampaigns = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (!value) return campaigns;
+    return campaigns.filter((campaign) => campaign.name.toLowerCase().includes(value));
+  }, [campaigns, query]);
   const adsCost = analytics?.totals.adsCost ?? 116230000;
   const roas = analytics?.totals.roas ?? 6.4;
 
@@ -20,6 +27,8 @@ export default function CampaignsReportPage() {
         <div className="relative w-72">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Tìm campaign..."
             className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
@@ -65,7 +74,7 @@ export default function CampaignsReportPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {campaigns.map((campaign) => (
+              {filteredCampaigns.map((campaign) => (
                 <tr key={`${campaign.rank}-${campaign.name}`} className="hover:bg-gray-50/60">
                   <td className="px-4 py-3 font-semibold text-gray-400">{campaign.rank}</td>
                   <td className="px-4 py-3 font-semibold text-gray-800">{campaign.name}</td>
@@ -74,6 +83,13 @@ export default function CampaignsReportPage() {
                   <td className="px-4 py-3 text-right font-bold text-gray-950">{campaign.roas}x</td>
                 </tr>
               ))}
+              {filteredCampaigns.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                    Không tìm thấy campaign phù hợp.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

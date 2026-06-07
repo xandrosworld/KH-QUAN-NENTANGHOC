@@ -289,7 +289,7 @@ export default function Topbar() {
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   {modalView === "profile"
-                    ? "Thông tin admin dùng cho màn vận hành Phase 1."
+                    ? "Thông tin hiển thị cho tài khoản quản trị."
                     : "Cập nhật mật khẩu đăng nhập dashboard."}
                 </p>
               </div>
@@ -388,7 +388,7 @@ export default function Topbar() {
             ) : (
               <form onSubmit={savePassword} className="space-y-5 p-6">
                 <div className="rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700">
-                  Mật khẩu mới sẽ được lưu cho tài khoản admin hiện tại. Đây là phần vận hành cơ bản của Phase 1.
+                  Mật khẩu mới sẽ được lưu cho tài khoản admin hiện tại và dùng cho lần đăng nhập tiếp theo.
                 </div>
 
                 <div className="grid gap-4">

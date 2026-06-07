@@ -20,7 +20,7 @@ export default function KpiSettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Cài đặt công thức / KPI</h1>
-        <p className="mt-1 text-sm text-gray-500">Cấu hình bộ chỉ số Phase 1 theo công thức khách đã xác nhận.</p>
+        <p className="mt-1 text-sm text-gray-500">Cấu hình bộ chỉ số đang áp dụng cho dashboard.</p>
       </div>
 
       <div className="rounded-xl border border-green-100 bg-green-50 p-4">
@@ -29,7 +29,7 @@ export default function KpiSettingsPage() {
           <div>
             <h2 className="text-sm font-semibold text-green-800">Trạng thái triển khai</h2>
             <p className="mt-1 text-sm text-green-700">
-              Công thức đã đủ để dựng engine tính toán. Khi khách gửi file mẫu, hệ thống chỉ cần khóa mapping cột theo từng nguồn dữ liệu.
+              Bộ công thức đang được áp dụng cho dữ liệu đã import và tự động cập nhật trên dashboard.
             </p>
           </div>
         </div>
@@ -41,7 +41,7 @@ export default function KpiSettingsPage() {
             <Calculator size={20} />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-gray-950">Bộ KPI Phase 1</h2>
+            <h2 className="text-base font-semibold text-gray-950">Bộ KPI đang áp dụng</h2>
             <p className="text-sm text-gray-500">Áp dụng cho dashboard doanh thu, lợi nhuận, sản phẩm và campaign.</p>
           </div>
         </div>

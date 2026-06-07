@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Calendar, Filter, Settings2 } from 'lucide-react';
+import { Calendar, Settings2 } from 'lucide-react';
 import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
-import FilterPanel from '@/components/ui/FilterPanel';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import {
@@ -14,8 +12,6 @@ import {
   channelProfits,
   profitDetailRows,
 } from '@/lib/mock-data';
-
-const subTabs = ['Tổng quan', 'Theo thời gian', 'Theo kênh', 'Theo shop', 'Theo campaign', 'Phân tích chi phí'];
 
 const profitColumns = [
   { key: 'rank', label: '#' },
@@ -32,8 +28,6 @@ const profitColumns = [
 ];
 
 export default function ProfitReportPage() {
-  const [activeTab, setActiveTab] = useState(0);
-  const [filterVisible, setFilterVisible] = useState(false);
   const analytics = useAnalyticsData();
   const kpis = analytics?.profitKpis ?? profitKpis;
   const chartData = analytics?.profitChartData ?? profitChartData;
@@ -53,8 +47,7 @@ export default function ProfitReportPage() {
   });
 
   return (
-    <div className="flex h-full">
-      <div className="flex-1 space-y-6 overflow-y-auto">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Báo cáo lợi nhuận</h1>
@@ -65,32 +58,9 @@ export default function ProfitReportPage() {
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
               <Calendar size={16} />
-              01/05/2025 - 31/05/2025
-            </button>
-            <button
-              onClick={() => setFilterVisible(!filterVisible)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterVisible ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Filter size={16} />
-              Bộ lọc
+              Tất cả thời gian
             </button>
           </div>
-        </div>
-
-        <div className="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-fit">
-          {subTabs.map((tab, idx) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(idx)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === idx ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -247,9 +217,6 @@ export default function ProfitReportPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <FilterPanel visible={filterVisible} onClose={() => setFilterVisible(false)} />
     </div>
   );
 }

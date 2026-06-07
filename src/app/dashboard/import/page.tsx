@@ -49,7 +49,7 @@ const sources = [
 const steps = [
   { num: 1, label: "Chọn nguồn\ndữ liệu" },
   { num: 2, label: "Upload file" },
-  { num: 3, label: "Xem trước\n& Mapping" },
+  { num: 3, label: "Kiểm tra\n dữ liệu" },
   { num: 4, label: "Xác nhận\nimport" },
 ];
 
@@ -113,7 +113,7 @@ export default function ImportPage() {
       }));
       if (items.length) setHistoryItems(items);
     } catch {
-      // Keep mock history as graceful fallback for demo.
+      // Giữ lịch sử mặc định nếu API tạm thời không phản hồi.
     }
   }, []);
 
@@ -146,7 +146,7 @@ export default function ImportPage() {
         if (items.length) setHistoryItems(items);
       })
       .catch(() => {
-        // Keep mock history as graceful fallback for demo.
+        // Giữ lịch sử mặc định nếu API tạm thời không phản hồi.
       });
     return () => {
       mounted = false;
@@ -461,7 +461,7 @@ export default function ImportPage() {
             <div className="mt-5 grid grid-cols-2 gap-x-10 gap-y-5">
               {[
                 ["1.", "Tải file mẫu", "Tải file mẫu theo từng nguồn dữ liệu để xem định dạng chuẩn."],
-                ["3.", "Upload & Mapping", "Upload file và hệ thống sẽ tự động gợi ý mapping các cột dữ liệu"],
+                ["3.", "Kiểm tra dữ liệu", "Upload file và hệ thống sẽ tự động đọc, chuẩn hóa, kiểm tra các dòng dữ liệu."],
                 ["2.", "Chuẩn bị dữ liệu", "Điền dữ liệu vào file mẫu, đảm bảo đúng định dạng và đầy đủ thông tin"],
                 ["4.", "Xác nhận import", "Kiểm tra lại dữ liệu và xác nhận để hoàn tất import."],
               ].map(([num, title, desc]) => (

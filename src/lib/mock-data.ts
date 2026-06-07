@@ -131,26 +131,26 @@ export const topCampaigns: TopCampaign[] = [
 ];
 
 export const importHistory: ImportHistoryItem[] = [
-  { id: '1', fileName: 'Shopee_Orders_May2024.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '31/05/2024 10:30', size: '98.6 MB', records: '1,245 đơn hàng', status: 'success' },
-  { id: '2', fileName: 'TikTok_Shop_May2024.xlsx', source: 'tiktok', sourceLabel: 'TikTok Shop', date: '31/05/2024 09:15', size: '76.4 MB', records: '876 đơn hàng', status: 'success' },
-  { id: '3', fileName: 'Ads_Facebook_May2024.csv', source: 'ads', sourceLabel: 'Facebook Ads', date: '30/05/2024 16:45', size: '12.7 MB', records: '32 campaign', status: 'processing' },
-  { id: '4', fileName: 'GiaVon_SanPham_May2024.xlsx', source: 'giavon', sourceLabel: 'Giá vốn', date: '30/05/2024 14:20', size: '45.3 MB', records: '1,234 sản phẩm', status: 'success' },
-  { id: '5', fileName: 'Shopee_Orders_Apr2024.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '29/05/2024 10:20', size: '98.6 MB', records: '0 đơn hàng', status: 'error' },
-  { id: '6', fileName: 'TikTok_Ads_Apr2024.csv', source: 'ads', sourceLabel: 'TikTok Ads', date: '28/05/2024 15:10', size: '8.9 MB', records: '18 campaign', status: 'success' },
-  { id: '7', fileName: 'Shopee_Orders_May2024.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '31/05/2024 10:30', size: '98.6 MB', records: '1,245 đơn hàng', status: 'success' },
+  { id: '1', fileName: 'Shopee_Orders_Jun2026.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '30/06/2026 10:30', size: '98.6 MB', records: '1,245 đơn hàng', status: 'success' },
+  { id: '2', fileName: 'TikTok_Shop_Jun2026.xlsx', source: 'tiktok', sourceLabel: 'TikTok Shop', date: '30/06/2026 09:15', size: '76.4 MB', records: '876 đơn hàng', status: 'success' },
+  { id: '3', fileName: 'Ads_Facebook_Jun2026.csv', source: 'ads', sourceLabel: 'Facebook Ads', date: '29/06/2026 16:45', size: '12.7 MB', records: '32 campaign', status: 'processing' },
+  { id: '4', fileName: 'GiaVon_SanPham_Jun2026.xlsx', source: 'giavon', sourceLabel: 'Giá vốn', date: '29/06/2026 14:20', size: '45.3 MB', records: '1,234 sản phẩm', status: 'success' },
+  { id: '5', fileName: 'Shopee_Orders_Jun2026_retry.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '28/06/2026 10:20', size: '98.6 MB', records: '0 đơn hàng', status: 'error' },
+  { id: '6', fileName: 'TikTok_Ads_Jun2026.csv', source: 'ads', sourceLabel: 'TikTok Ads', date: '28/06/2026 15:10', size: '8.9 MB', records: '18 campaign', status: 'success' },
+  { id: '7', fileName: 'Shopee_Orders_Jun2026.xlsx', source: 'shopee', sourceLabel: 'Shopee Orders', date: '30/06/2026 10:30', size: '98.6 MB', records: '1,245 đơn hàng', status: 'success' },
 ];
 
 export const dataManagementRows: DataManagementRow[] = [
-  { id: '1', fileName: 'Shopee_Orders_May2024.xlsx', fileSize: '1.2 MB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '31/05/2024 10:30', dataRows: 12456, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '2', fileName: 'TikTok_Shop_May2024.xlsx', fileSize: '764 KB', source: 'TikTok Shop', dataType: 'Đơn hàng', importDate: '31/05/2024 09:15', dataRows: 8732, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '3', fileName: 'Ads_Facebook_May2024.csv', fileSize: '12.7 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '30/05/2024 16:45', dataRows: 32891, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '4', fileName: 'GiaVon_SanPham_May2024.xlsx', fileSize: '45.3 MB', source: 'Giá vốn', dataType: 'Giá vốn sản phẩm', importDate: '30/05/2024 14:20', dataRows: 1234, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '5', fileName: 'Shopee_Orders_Apr2024.xlsx', fileSize: '983 KB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '29/05/2024 10:20', dataRows: 0, status: 'error', importedBy: 'Nguyễn Văn A' },
-  { id: '6', fileName: 'TikTok_Ads_Apr2024.csv', fileSize: '8.9 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '28/05/2024 15:10', dataRows: 18235, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '7', fileName: 'Ads_Google_Apr2024.csv', fileSize: '6.2 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '27/05/2024 11:05', dataRows: 15672, status: 'processing', importedBy: 'Nguyễn Văn A' },
-  { id: '8', fileName: 'Shopee_Orders_Mar2024.xlsx', fileSize: '765 KB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '26/05/2024 09:30', dataRows: 11243, status: 'error', importedBy: 'Nguyễn Văn A' },
-  { id: '9', fileName: 'GiaVon_SanPham_Apr2024.xlsx', fileSize: '32.1 MB', source: 'Giá vốn', dataType: 'Giá vốn sản phẩm', importDate: '25/05/2024 17:45', dataRows: 1189, status: 'success', importedBy: 'Nguyễn Văn A' },
-  { id: '10', fileName: 'TikTok_Shop_Apr2024.xlsx', fileSize: '658 MB', source: 'TikTok Shop', dataType: 'Đơn hàng', importDate: '24/05/2024 16:20', dataRows: 7891, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '1', fileName: 'Shopee_Orders_Jun2026.xlsx', fileSize: '1.2 MB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '30/06/2026 10:30', dataRows: 12456, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '2', fileName: 'TikTok_Shop_Jun2026.xlsx', fileSize: '764 KB', source: 'TikTok Shop', dataType: 'Đơn hàng', importDate: '30/06/2026 09:15', dataRows: 8732, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '3', fileName: 'Ads_Facebook_Jun2026.csv', fileSize: '12.7 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '29/06/2026 16:45', dataRows: 32891, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '4', fileName: 'GiaVon_SanPham_Jun2026.xlsx', fileSize: '45.3 MB', source: 'Giá vốn', dataType: 'Giá vốn sản phẩm', importDate: '29/06/2026 14:20', dataRows: 1234, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '5', fileName: 'Shopee_Orders_Jun2026_retry.xlsx', fileSize: '983 KB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '28/06/2026 10:20', dataRows: 0, status: 'error', importedBy: 'Nguyễn Văn A' },
+  { id: '6', fileName: 'TikTok_Ads_Jun2026.csv', fileSize: '8.9 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '28/06/2026 15:10', dataRows: 18235, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '7', fileName: 'Ads_Google_Jun2026.csv', fileSize: '6.2 MB', source: 'Ads', dataType: 'Chi phí quảng cáo', importDate: '27/06/2026 11:05', dataRows: 15672, status: 'processing', importedBy: 'Nguyễn Văn A' },
+  { id: '8', fileName: 'Shopee_Orders_Jun2026_update.xlsx', fileSize: '765 KB', source: 'Shopee', dataType: 'Đơn hàng', importDate: '26/06/2026 09:30', dataRows: 11243, status: 'error', importedBy: 'Nguyễn Văn A' },
+  { id: '9', fileName: 'GiaVon_SanPham_Jun2026.xlsx', fileSize: '32.1 MB', source: 'Giá vốn', dataType: 'Giá vốn sản phẩm', importDate: '25/06/2026 17:45', dataRows: 1189, status: 'success', importedBy: 'Nguyễn Văn A' },
+  { id: '10', fileName: 'TikTok_Shop_Jun2026.xlsx', fileSize: '658 MB', source: 'TikTok Shop', dataType: 'Đơn hàng', importDate: '24/06/2026 16:20', dataRows: 7891, status: 'success', importedBy: 'Nguyễn Văn A' },
 ];
 
 export const revenueKpis: KpiMetric[] = [
@@ -201,14 +201,14 @@ export const channelProfits: ChannelProfit[] = [
 ];
 
 export const revenueDetailRows: RevenueDetailRow[] = [
-  { rank: 1, date: '01/05/2025', doanhThu: '42,500,000đ', donHang: '156', sanPhamDaBan: '312', aov: '272,436đ', tyLeHoan: '3.2%', soVoiKyTruoc: '+12.5%', soVoiKyTruocType: 'up' },
-  { rank: 2, date: '02/05/2025', doanhThu: '38,200,000đ', donHang: '142', sanPhamDaBan: '284', aov: '268,873đ', tyLeHoan: '2.8%', soVoiKyTruoc: '+8.3%', soVoiKyTruocType: 'up' },
-  { rank: 3, date: '03/05/2025', doanhThu: '45,100,000đ', donHang: '168', sanPhamDaBan: '336', aov: '268,452đ', tyLeHoan: '4.1%', soVoiKyTruoc: '-3.2%', soVoiKyTruocType: 'down' },
-  { rank: 4, date: '04/05/2025', doanhThu: '35,800,000đ', donHang: '130', sanPhamDaBan: '260', aov: '275,385đ', tyLeHoan: '2.5%', soVoiKyTruoc: '+5.7%', soVoiKyTruocType: 'up' },
-  { rank: 5, date: '05/05/2025', doanhThu: '51,300,000đ', donHang: '189', sanPhamDaBan: '378', aov: '271,429đ', tyLeHoan: '3.8%', soVoiKyTruoc: '+18.2%', soVoiKyTruocType: 'up' },
-  { rank: 6, date: '06/05/2025', doanhThu: '39,600,000đ', donHang: '148', sanPhamDaBan: '296', aov: '267,568đ', tyLeHoan: '3.0%', soVoiKyTruoc: '-1.5%', soVoiKyTruocType: 'down' },
-  { rank: 7, date: '07/05/2025', doanhThu: '44,200,000đ', donHang: '162', sanPhamDaBan: '324', aov: '272,840đ', tyLeHoan: '3.5%', soVoiKyTruoc: '+9.1%', soVoiKyTruocType: 'up' },
-  { rank: 8, date: '08/05/2025', doanhThu: '47,800,000đ', donHang: '175', sanPhamDaBan: '350', aov: '273,143đ', tyLeHoan: '4.0%', soVoiKyTruoc: '+14.3%', soVoiKyTruocType: 'up' },
+  { rank: 1, date: '01/06/2026', doanhThu: '42,500,000đ', donHang: '156', sanPhamDaBan: '312', aov: '272,436đ', tyLeHoan: '3.2%', soVoiKyTruoc: '+12.5%', soVoiKyTruocType: 'up' },
+  { rank: 2, date: '02/06/2026', doanhThu: '38,200,000đ', donHang: '142', sanPhamDaBan: '284', aov: '268,873đ', tyLeHoan: '2.8%', soVoiKyTruoc: '+8.3%', soVoiKyTruocType: 'up' },
+  { rank: 3, date: '03/06/2026', doanhThu: '45,100,000đ', donHang: '168', sanPhamDaBan: '336', aov: '268,452đ', tyLeHoan: '4.1%', soVoiKyTruoc: '-3.2%', soVoiKyTruocType: 'down' },
+  { rank: 4, date: '04/06/2026', doanhThu: '35,800,000đ', donHang: '130', sanPhamDaBan: '260', aov: '275,385đ', tyLeHoan: '2.5%', soVoiKyTruoc: '+5.7%', soVoiKyTruocType: 'up' },
+  { rank: 5, date: '05/06/2026', doanhThu: '51,300,000đ', donHang: '189', sanPhamDaBan: '378', aov: '271,429đ', tyLeHoan: '3.8%', soVoiKyTruoc: '+18.2%', soVoiKyTruocType: 'up' },
+  { rank: 6, date: '06/06/2026', doanhThu: '39,600,000đ', donHang: '148', sanPhamDaBan: '296', aov: '267,568đ', tyLeHoan: '3.0%', soVoiKyTruoc: '-1.5%', soVoiKyTruocType: 'down' },
+  { rank: 7, date: '07/06/2026', doanhThu: '44,200,000đ', donHang: '162', sanPhamDaBan: '324', aov: '272,840đ', tyLeHoan: '3.5%', soVoiKyTruoc: '+9.1%', soVoiKyTruocType: 'up' },
+  { rank: 8, date: '08/06/2026', doanhThu: '47,800,000đ', donHang: '175', sanPhamDaBan: '350', aov: '273,143đ', tyLeHoan: '4.0%', soVoiKyTruoc: '+14.3%', soVoiKyTruocType: 'up' },
 ];
 
 export const profitDetailRows: ProfitDetailRow[] = [
@@ -219,19 +219,19 @@ export const profitDetailRows: ProfitDetailRow[] = [
 ];
 
 export const fileDetail: FileDetail = {
-  fileName: 'Shopee_Orders_May2024.xlsx',
+  fileName: 'Shopee_Orders_Jun2026.xlsx',
   source: 'Shopee',
   dataType: 'Đơn hàng',
   importedBy: 'Nguyễn Văn A',
-  importDate: '31/05/2024 10:30',
+  importDate: '30/06/2026 10:30',
   dataRows: 12456,
-  originalFile: 'Shopee_Orders_May2024.xlsx',
+  originalFile: 'Shopee_Orders_Jun2026.xlsx',
   notes: '-',
   totalRows: 12456,
   validRows: 12312,
   validPercent: '98.84%',
   errorRows: 144,
   errorPercent: '1.16%',
-  dateRangeFrom: '01/05/2024',
-  dateRangeTo: '31/05/2024',
+  dateRangeFrom: '01/06/2026',
+  dateRangeTo: '30/06/2026',
 };

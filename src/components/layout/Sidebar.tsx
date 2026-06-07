@@ -239,22 +239,6 @@ export default function Sidebar() {
           </section>
         ))}
       </nav>
-
-      <div className="px-[17px] pb-[18px] pt-3">
-        <Link
-          href="#"
-          aria-label="Xem hướng dẫn sử dụng"
-          className="block h-[62px] w-[225px] rounded-[8px] transition-opacity hover:opacity-90"
-        >
-          <Image
-            src="/brand/sidebar/help-card.svg"
-            alt=""
-            width={225}
-            height={62}
-            className="h-[62px] w-[225px]"
-          />
-        </Link>
-      </div>
     </aside>
   );
 }

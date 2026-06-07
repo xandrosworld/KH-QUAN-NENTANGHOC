@@ -1,12 +1,19 @@
 "use client";
 
 import { Package, Search, TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { channelRevenue, topProducts } from "@/lib/mock-data";
 
 export default function ProductsReportPage() {
+  const [query, setQuery] = useState("");
   const analytics = useAnalyticsData();
   const products = analytics?.topProducts ?? topProducts;
+  const filteredProducts = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (!value) return products;
+    return products.filter((product) => product.name.toLowerCase().includes(value));
+  }, [products, query]);
   const totalRevenue = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
   const soldProducts = analytics?.totals.soldProducts ?? 812345;
 
@@ -20,6 +27,8 @@ export default function ProductsReportPage() {
         <div className="relative w-72">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Tìm sản phẩm..."
             className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
@@ -65,7 +74,7 @@ export default function ProductsReportPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={`${product.rank}-${product.name}`} className="hover:bg-gray-50/60">
                   <td className="px-4 py-3 font-semibold text-gray-400">{product.rank}</td>
                   <td className="px-4 py-3 font-semibold text-gray-800">{product.name}</td>
@@ -74,6 +83,13 @@ export default function ProductsReportPage() {
                   <td className="px-4 py-3 text-right font-bold text-gray-950">{product.netProfit}</td>
                 </tr>
               ))}
+              {filteredProducts.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                    Không tìm thấy sản phẩm phù hợp.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

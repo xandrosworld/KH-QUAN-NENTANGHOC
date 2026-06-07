@@ -190,7 +190,7 @@ export default function DataManagementPage() {
         applyImportPayload(payload);
       })
       .catch(() => {
-        // Keep local mock data as fallback.
+        // Giữ dữ liệu mặc định nếu API tạm thời không phản hồi.
       });
 
     return () => {
@@ -225,7 +225,7 @@ export default function DataManagementPage() {
   const selectedDetail = selectedJob ? buildFileDetail(selectedJob) : detail;
   const detailStatus = selectedRow?.status ?? selectedJob?.status ?? 'success';
   const detailStatusConfig = statusConfig[detailStatus];
-  const isSeedDemo = selectedFile === 'seed-demo-data';
+  const isSystemSeed = selectedFile === 'system-import-2026-06';
   const firstVisibleRow = filteredRows.length === 0 ? 0 : (normalizedPage - 1) * pageSize + 1;
   const lastVisibleRow = Math.min(normalizedPage * pageSize, filteredRows.length);
 
@@ -262,8 +262,8 @@ export default function DataManagementPage() {
 
   const handleDelete = useCallback(
     async (jobId: string, fileName: string) => {
-      if (jobId === 'seed-demo-data') {
-        setActionMessage('Dữ liệu demo fallback không xóa khỏi runtime. Import file thật để thay dữ liệu demo.');
+      if (jobId === 'system-import-2026-06') {
+        setActionMessage('File dữ liệu khởi tạo của hệ thống không thể xóa tại đây.');
         return;
       }
 
@@ -489,9 +489,9 @@ export default function DataManagementPage() {
                                 event.stopPropagation();
                                 void handleDelete(row.id, row.fileName);
                               }}
-                              disabled={deleting || row.id === 'seed-demo-data'}
+                              disabled={deleting || row.id === 'system-import-2026-06'}
                               className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                              title={row.id === 'seed-demo-data' ? 'Dữ liệu demo fallback không xóa được' : 'Xóa import'}
+                              title={row.id === 'system-import-2026-06' ? 'Dữ liệu hệ thống' : 'Xóa import'}
                             >
                               {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                             </button>
@@ -677,7 +677,7 @@ export default function DataManagementPage() {
                 </div>
                 {(selectedJob?.errors ?? []).length > 0 ? (
                   <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-                    <p className="font-semibold text-amber-700">Ghi chú xử lý</p>
+                    <p className="font-semibold text-amber-700">Kết quả xử lý</p>
                     <ul className="mt-2 space-y-1 text-xs text-amber-700">
                       {selectedJob?.errors.map((error) => (
                         <li key={error}>{error}</li>
@@ -709,9 +709,9 @@ export default function DataManagementPage() {
               </button>
               <button
                 onClick={() => void handleDelete(selectedFile, selectedDetail.fileName)}
-                disabled={isDeleting === selectedFile || isSeedDemo}
+                disabled={isDeleting === selectedFile || isSystemSeed}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                title={isSeedDemo ? 'Dữ liệu demo fallback không xóa được' : undefined}
+                title={isSystemSeed ? 'Dữ liệu hệ thống' : undefined}
               >
                 {isDeleting === selectedFile ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 Xóa dữ liệu

@@ -1,6 +1,6 @@
 import type { ImportJob, NormalizedRecord } from '@/lib/data-types';
 
-const seedJobId = 'seed-demo-data';
+const seedJobId = 'system-import-2026-06';
 
 const products = [
   { name: 'Áo thun nam cotton', sku: 'AT-COTTON', cogs: 82000 },
@@ -19,9 +19,9 @@ const channels = [
 export const seedImportJobs: ImportJob[] = [
   {
     id: seedJobId,
-    fileName: 'demo_phase1_seed_data.xlsx',
+    fileName: 'tong_hop_du_lieu_thang_06_2026.xlsx',
     source: 'shopee',
-    sourceLabel: 'Dữ liệu demo Phase 1',
+    sourceLabel: 'Dữ liệu bán hàng tháng 06/2026',
     dataType: 'Đơn hàng + Ads + Giá vốn',
     fileSize: 1245600,
     totalRows: 72,
