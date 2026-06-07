@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -71,9 +71,6 @@ export default function MetricCard({ title, value, changeLabel, change, icon, co
             </div>
             <span className="text-sm text-gray-500 font-medium">{title}</span>
           </div>
-          <button className="text-gray-400 hover:text-gray-600 transition-colors">
-            <ChevronRight size={18} />
-          </button>
         </div>
 
         {/* Value */}

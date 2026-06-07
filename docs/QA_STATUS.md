@@ -15,9 +15,9 @@
 | `/dashboard/reports/campaigns` | Báo cáo campaign | ✅ Implemented | Ads KPI + top campaign table |
 | `/dashboard/reports/platforms` | Báo cáo theo nền tảng | ✅ Implemented | Channel cards + revenue share |
 | `/dashboard/data-management` | Quản lý dữ liệu | ✅ Implemented | Summary, import table, detail panel |
-| `/dashboard/settings/kpi` | Cài đặt công thức/KPI | ✅ Implemented | Phase 1 formulas |
+| `/dashboard/settings/kpi` | Cài đặt công thức/KPI | ✅ Implemented | Công thức KPI đã cấu hình |
 | `/dashboard/settings/shops` | Quản lý shop/nền tảng | ✅ Implemented | Import/API source status |
-| `/dashboard/settings/system` | Cài đặt hệ thống | ✅ Implemented | Phase 1 system status |
+| `/dashboard/settings/system` | Cài đặt hệ thống | ✅ Implemented | Trạng thái hệ thống và dữ liệu |
 
 ## Known Gaps (vs Figma)
 
@@ -29,20 +29,20 @@
 | Revenue | KPI titles/values hơi khác Figma (Figma có AOV, Sản phẩm đã bán) | Medium | Mock data hiện dùng tên khác, cần align với khách |
 | Revenue | Chưa có "Bộ lọc báo cáo" sidebar panel như Figma | Medium | Phase 2 scope |
 | Profit | KPI cards có 6 cards (Figma), hiện có 6 cards nhưng data khác | Medium | Cần khách xác nhận KPI definitions |
-| Import | Mock history data khác Figma (tên file, ngày tháng) | Low | Data sẽ thay bằng real data khi có backend |
+| Import | Lịch sử import phụ thuộc dữ liệu đang có trong hệ thống | Low | Kiểm tra lại sau khi khách gửi file thật |
 
 ## Backend/API Status
 
 | API | Status | Notes |
 |-----|--------|-------|
-| `GET /api/analytics` | ✅ Implemented | Tính KPI/dashboard từ imported records hoặc seed fallback |
+| `GET /api/analytics` | ✅ Implemented | Tính KPI/dashboard từ dữ liệu hiện tại |
 | `GET /api/imports` | ✅ Implemented | Trả lịch sử import + summary + detail |
 | `POST /api/imports` | ✅ Implemented | Nhận `.csv/.xlsx`, parse và normalize theo source |
 | `POST /api/chat` | ✅ Implemented | Trả lời data-aware theo analytics hiện tại |
 | `POST /api/auth/login` | ✅ Implemented | Admin login + httpOnly session cookie |
 | `POST /api/auth/logout` | ✅ Implemented | Xóa session |
 
-## Auth / Demo Credentials
+## Auth Credentials
 
 | Item | Value |
 |------|-------|
@@ -56,8 +56,8 @@
 | Item | Status |
 |------|--------|
 | File mẫu khách hàng | ⏳ Chờ khách gửi để khóa mapping header thực tế |
-| AI provider key | ⏳ Chờ cấu hình tài khoản/API key nếu muốn dùng model bên thứ ba |
-| Persistent storage | ⏳ Cấu hình `TRONX_DATA_DIR` trỏ tới Railway volume nếu muốn import history bền qua redeploy |
+| AI provider/key | ⏳ Chờ cấu hình tài khoản của khách nếu muốn dùng model bên thứ ba |
+| Persistent storage | ⏳ Cấu hình `TRONX_DATA_DIR` trỏ tới thư mục lưu trữ production |
 | API realtime/connect shop | ⏭️ Phase sau / scope bổ sung |
 
 ## Import Templates

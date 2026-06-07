@@ -1,126 +1,105 @@
 # TronX AI Dashboard
 
-Phần mềm quản lý bán hàng đa kênh thông minh — AI Dashboard & Chatbot.
+Phần mềm quản lý bán hàng đa kênh cho Nền Tảng Online: nhập dữ liệu bán hàng, chuẩn hóa KPI, xem báo cáo và hỏi nhanh bằng chatbot theo dữ liệu đang có trong hệ thống.
 
 ## Cách chạy
 
 ```bash
-# Cài đặt dependency
 npm install
-
-# Chạy development server
 npm run dev
+```
 
-# Build production
-npm run build
+Mở [http://localhost:3000](http://localhost:3000). Ứng dụng sẽ chuyển về màn đăng nhập nếu chưa có phiên làm việc.
 
-# Chạy production server
-npm start
+## Build production
 
-# Kiểm tra lint
+```bash
 npm run lint
+npm run build
+npm start
 ```
 
-Mở [http://localhost:3000](http://localhost:3000) — tự động redirect đến `/login`.
+## Tài khoản quản trị mặc định
 
-## Stack công nghệ
+| Trường | Giá trị |
+| --- | --- |
+| Email | `admin@tronx.vn` hoặc `admin` |
+| Password | `admin123` |
+| Env override | `TRONX_ADMIN_EMAIL`, `TRONX_ADMIN_PASSWORD` |
 
-- **Framework**: Next.js 16.2.7 (App Router, Turbopack)
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS v4
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Font**: Geist Sans (Google Fonts)
+## Trạng thái Phase 1
 
-## Trạng thái scope — Giai đoạn 1
+Các hạng mục Phase 1 đã được triển khai để bàn giao vận hành:
 
-### Frontend UI
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Đăng nhập quản trị | Đã có login/logout bằng session cookie httpOnly |
+| Hồ sơ tài khoản | Đã có cập nhật tên/email/avatar và đổi mật khẩu |
+| Import dữ liệu | Đã nhận `.csv/.xlsx`, kiểm tra file, parse và chuẩn hóa theo nguồn |
+| Template import | Đã có template cho Shopee, TikTok Shop, Ads, Giá vốn, Lazada |
+| Dashboard KPI | Đã tính từ dữ liệu đã import hoặc dữ liệu hệ thống khi chưa có import mới |
+| Báo cáo doanh thu | Đã có KPI, chart, cơ cấu kênh và bảng chi tiết |
+| Báo cáo lợi nhuận | Đã có KPI, chart chi phí/kênh và bảng chi tiết |
+| Báo cáo sản phẩm | Đã có KPI, tìm kiếm và bảng sản phẩm |
+| Báo cáo campaign | Đã có KPI, tìm kiếm và bảng campaign |
+| Báo cáo nền tảng | Đã có thống kê doanh thu theo kênh |
+| Quản lý dữ liệu | Đã có lịch sử import, tìm kiếm/lọc, xem chi tiết, tải CSV và xóa import |
+| Chatbot dữ liệu | Đã trả lời theo analytics/import hiện tại |
+| Cài đặt | Đã có màn quản lý shop/nền tảng, công thức KPI và thông tin hệ thống |
 
-> **Lưu ý**: Tất cả các trang dưới đây chỉ là **UI mock** với dữ liệu giả (mock data).
-> Chưa có backend, chưa có logic xử lý thực. Buttons, filters, tabs chỉ có UI, chưa có functionality.
-> Dark mode chưa được triển khai.
+## API chính
 
-| Khu vực | Trạng thái | Chi tiết |
-|---------|-----------|----------|
-| **Auth - Login** | ✅ UI mock completed | Form layout, social login icons. Hero panel chờ asset từ designer |
-| **Auth - Quên mật khẩu** | ✅ UI mock completed | Email input form |
-| **Auth - Nhập mã OTP** | ✅ UI mock completed | 5 ô OTP, countdown UI |
-| **Auth - Đặt lại mật khẩu** | ✅ UI mock completed | New/confirm password form |
-| **Dashboard Shell** | ✅ UI mock completed | Sidebar nav, topbar, chatbot button |
-| **Dashboard Overview** | ✅ UI mock completed | 5 KPI cards, line chart, donut chart, top products/campaigns tables |
-| **Import dữ liệu** | ✅ UI mock completed | Source selection, upload zone, hướng dẫn, lịch sử import |
-| **Quản lý dữ liệu** | ✅ UI mock completed | Filter tabs, summary cards, data table, detail panel |
-| **Báo cáo doanh thu** | ✅ UI mock completed | KPI cards, line chart, donut, detail table |
-| **Báo cáo lợi nhuận** | ✅ UI mock completed | KPI cards, charts, profit table |
-| **BC sản phẩm** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **BC campaign** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **BC theo nền tảng** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **Cài đặt công thức / KPI** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **Quản lý shop / nền tảng** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **Cài đặt hệ thống** | 🔲 Placeholder | Route tồn tại, chờ thiết kế chi tiết |
-| **Dark mode** | ❌ Chưa triển khai | Chưa có design token cho dark mode |
+| API | Chức năng |
+| --- | --- |
+| `POST /api/auth/login` | Đăng nhập quản trị |
+| `POST /api/auth/logout` | Đăng xuất |
+| `GET /api/auth/me` | Lấy thông tin phiên hiện tại |
+| `PATCH /api/auth/me` | Cập nhật hồ sơ |
+| `POST /api/auth/password` | Đổi mật khẩu |
+| `GET /api/analytics` | Lấy KPI, chart và dữ liệu báo cáo |
+| `GET /api/imports` | Lấy lịch sử import, chi tiết hoặc tải CSV |
+| `POST /api/imports` | Import file dữ liệu |
+| `DELETE /api/imports` | Xóa một lượt import |
+| `POST /api/chat` | Hỏi chatbot theo dữ liệu hệ thống |
 
-### 6 routes placeholder
+## Dữ liệu runtime
 
-Các route sau tồn tại nhưng chỉ hiển thị text placeholder, chưa có UI thực:
+Mặc định dữ liệu runtime được lưu trong `.runtime-data`. Khi triển khai production, cấu hình `TRONX_DATA_DIR` trỏ tới thư mục lưu trữ bền vững của môi trường chạy.
 
-1. `/dashboard/reports/products` — BC sản phẩm
-2. `/dashboard/reports/campaigns` — BC campaign
-3. `/dashboard/reports/platforms` — BC theo nền tảng
-4. `/dashboard/settings/kpi` — Cài đặt công thức / KPI
-5. `/dashboard/settings/shops` — Quản lý shop / nền tảng
-6. `/dashboard/settings/system` — Cài đặt hệ thống
+## Cần đối chiếu với khách trước khi chốt bàn giao
 
-### 🔲 Chưa triển khai (Backend + Tích hợp)
+1. Nhận file export thật từ từng nguồn để khóa mapping header thực tế.
+2. Import thử từng file thật và kiểm tra lại KPI doanh thu, phí sàn, giá vốn, ads, gross profit, net profit, ROAS, CPA, margin.
+3. Cấu hình domain, biến môi trường, thư mục lưu dữ liệu production và tài khoản quản trị chính thức.
+4. Nếu muốn chatbot dùng model bên thứ ba, cấu hình provider/key theo tài khoản của khách.
 
-- [ ] Authentication backend (đăng nhập/đăng ký/OTP thật)
-- [ ] Import Excel/CSV parser (Shopee, TikTok Shop, Ads, Giá vốn)
-- [ ] Chuẩn hóa dữ liệu & lưu database
-- [ ] API Dashboard KPI tính toán thực từ dữ liệu import
-- [ ] AI Chatbot tiếng Việt (tích hợp LLM, trả lời theo dữ liệu)
-- [ ] Tích hợp website hiện có hoặc triển khai subdomain
-- [ ] User management & role-based access
+Các kết nối realtime/API trực tiếp tới sàn, đồng bộ token shop và tự động kéo dữ liệu nằm ngoài Phase 1.
 
-## Cấu trúc dự án
+## Stack
 
-```
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- CSV/XLSX import pipeline nội bộ
+
+## Cấu trúc chính
+
+```text
 src/
-├── app/
-│   ├── (auth)/          # Auth pages (login, forgot-password, verify-code, reset-password)
-│   ├── dashboard/       # Dashboard pages
-│   │   ├── import/      # Import dữ liệu
-│   │   ├── data-management/  # Quản lý dữ liệu
-│   │   ├── reports/     # Báo cáo (revenue, profit, products, campaigns, platforms)
-│   │   └── settings/    # Cài đặt (kpi, shops, system)
-│   ├── globals.css
-│   ├── layout.tsx       # Root layout
-│   └── page.tsx         # Redirect → /login
-├── components/
-│   ├── layout/          # Sidebar, Topbar, ChatbotButton
-│   └── ui/              # MetricCard, ChartCard, DataTable, FilterPanel
-└── lib/
-    ├── types.ts         # TypeScript interfaces
-    ├── mock-data.ts     # Dữ liệu mock (Vietnamese)
-    └── utils.ts         # Utilities (cn, formatCurrency, formatNumber)
+  app/
+    (auth)/login/
+    api/
+    dashboard/
+      data-management/
+      import/
+      reports/
+      settings/
+  components/
+    layout/
+    ui/
+  hooks/
+  lib/
+    server/
 ```
-
-## Đầu vào còn thiếu từ designer/khách
-
-### Cần từ Designer:
-1. **Asset hero login panel** — ảnh/SVG không chứa text overlay (để code responsive)
-2. **Thiết kế chi tiết** cho 6 màn hình đang placeholder:
-   - Báo cáo sản phẩm
-   - Báo cáo campaign
-   - Báo cáo theo nền tảng
-   - Cài đặt công thức / KPI
-   - Quản lý shop / nền tảng
-   - Cài đặt hệ thống
-3. **File Figma editable** hoặc dev mode/spec/design tokens
-4. **Font chính xác** nếu designer dùng font khác system font
-
-### Cần từ Khách hàng:
-1. **Dữ liệu mẫu thật** — file export Shopee, TikTok Shop, Ads, Giá vốn (Excel/CSV)
-2. **Template/công thức KPI đã chốt**: doanh thu, phí sàn, hoàn/hủy, giá vốn, ads, gross profit, net profit, ROAS, CPA, margin
-3. **API key/provider AI** cho chatbot (OpenAI, Gemini, etc.)
-4. **Yêu cầu triển khai**: auth provider, server, domain/subdomain
-5. **Responsive requirements**: mobile/tablet nếu cần

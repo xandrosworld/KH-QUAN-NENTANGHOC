@@ -5,14 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronRight,
   CloudUpload,
   Download,
   FileText,
   Info,
   Loader2,
   MessageSquare,
-  MoreVertical,
   X,
 } from "lucide-react";
 import { importHistory } from "@/lib/mock-data";
@@ -490,12 +488,8 @@ export default function ImportPage() {
         </div>
 
         <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4">
             <h2 className="text-base font-semibold text-gray-950">Lịch sử import</h2>
-            <button className="flex items-center gap-1 text-sm font-semibold text-green-600 hover:text-green-700">
-              Xem thêm
-              <ChevronRight size={16} />
-            </button>
           </div>
 
           <div className="space-y-0">
@@ -525,14 +519,10 @@ export default function ImportPage() {
                       <p className="mt-1 text-sm text-gray-500">
                         {item.sourceLabel} <span className="mx-1">•</span> {item.date}
                       </p>
-                      <div className="mt-2 flex items-center justify-between gap-3">
+                      <div className="mt-2">
                         <p className="text-sm text-gray-500">
                           {item.records} <span className="mx-1">•</span> {item.size}
                         </p>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Download size={16} />
-                          <MoreVertical size={16} />
-                        </div>
                       </div>
                       {item.status === "error" && (
                         <p className="mt-2 text-sm font-medium text-red-500">

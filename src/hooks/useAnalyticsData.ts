@@ -14,7 +14,7 @@ export function useAnalyticsData() {
         if (mounted && payload) setData(payload);
       })
       .catch(() => {
-        // Keep page-level mock data as fallback.
+        // Keep the current page usable if analytics is temporarily unavailable.
       });
 
     return () => {

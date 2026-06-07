@@ -1,5 +1,5 @@
 /**
- * Import module types — Phase 1 implementation prep
+ * Import module types
  *
  * These types define the data structures for importing data from
  * Shopee, TikTok Shop, Lazada, Ads, and COGS (Giá vốn) sources.
@@ -159,11 +159,11 @@ export interface ImportJob {
 }
 
 // ────────────────────────────────────────────────────────────
-// KPI formulas — PHASE 1
+// KPI formulas
 // ────────────────────────────────────────────────────────────
 
 /**
- * KPI công thức tính Phase 1.
+ * KPI công thức tính.
  *
  * Công thức đã được đưa vào engine tính toán ở `server/analytics.ts`.
  * Khi khách gửi file mẫu, phần còn lại là khóa column mapping theo header thực tế.

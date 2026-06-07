@@ -58,10 +58,10 @@ export default function RevenueReportPage() {
             <p className="text-sm text-gray-500 mt-1">Phân tích chi tiết doanh thu theo thời gian, kênh bán hàng</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600">
               <Calendar size={16} />
               Tất cả thời gian
-            </button>
+            </div>
           </div>
         </div>
 

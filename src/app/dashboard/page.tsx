@@ -1,6 +1,7 @@
 'use client';
 
-import { Calendar, ChevronRight, BarChart3, Camera, Download, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { Calendar, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import MetricCard from '@/components/ui/MetricCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
@@ -19,21 +20,9 @@ function RevenueChart({ data }: { data: ChartDataPoint[] }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-gray-900">Doanh thu theo thời gian</h3>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-            Theo ngày
-            <ChevronDown size={14} />
-          </button>
-          <button className="p-1.5 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
-            <BarChart3 size={16} />
-          </button>
-          <button className="p-1.5 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
-            <Camera size={16} />
-          </button>
-          <button className="p-1.5 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
-            <Download size={16} />
-          </button>
-        </div>
+        <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600">
+          Theo ngày
+        </span>
       </div>
       <div className="flex items-center gap-6 mb-4">
         <div className="flex items-center gap-2">
@@ -82,10 +71,10 @@ function ChannelDonut({ data, total }: { data: ChannelRevenue[]; total: number }
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-semibold text-gray-950">Doanh thu theo kênh</h3>
-        <button className="flex items-center gap-1 text-sm font-semibold text-green-600 transition-colors hover:text-green-700">
+        <Link href="/dashboard/reports/platforms" className="flex items-center gap-1 text-sm font-semibold text-green-600 transition-colors hover:text-green-700">
           Xem thêm
           <ChevronRight size={16} />
-        </button>
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
@@ -152,10 +141,10 @@ function TopProductsTable({ products }: { products: TopProduct[] }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-gray-900">Top Sản Phẩm (Theo lợi nhuận)</h3>
-        <button className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
+        <Link href="/dashboard/reports/products" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
           Xem thêm
           <ChevronRight size={16} />
-        </button>
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -190,10 +179,10 @@ function TopCampaignsTable({ campaigns }: { campaigns: TopCampaign[] }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-gray-900">Top campaign (Theo ROAS)</h3>
-        <button className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
+        <Link href="/dashboard/reports/campaigns" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
           Xem thêm
           <ChevronRight size={16} />
-        </button>
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -271,16 +260,10 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-600">
             <span>01/06/2026 - 30/06/2026</span>
             <Calendar size={16} className="text-gray-400" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-400">
-              <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            So sánh: Tháng trước
-          </button>
+          </div>
         </div>
       </div>
 

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import {
-  Bell,
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -216,13 +215,6 @@ export default function Topbar() {
               priority
             />
           </Link>
-
-          <button className="relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100">
-            <Bell size={20} />
-            <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-              3
-            </span>
-          </button>
 
           <div className="relative">
             <button

@@ -56,10 +56,10 @@ export default function ProfitReportPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600">
               <Calendar size={16} />
               Tất cả thời gian
-            </button>
+            </div>
           </div>
         </div>
 
@@ -212,7 +212,7 @@ export default function ProfitReportPage() {
                 Net Profit = Doanh thu - Giá vốn (COGS) - Chi phí Ads - Phí sàn - Vận chuyển - Chi phí khác
               </p>
               <a href="/dashboard/settings/kpi" className="inline-block mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium underline">
-                Chỉnh sửa công thức trong Cài đặt →
+                Xem công thức trong Cài đặt →
               </a>
             </div>
           </div>
