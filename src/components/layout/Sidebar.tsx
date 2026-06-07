@@ -11,6 +11,7 @@ type SidebarItem = {
   asset?: string;
   width?: number;
   height?: number;
+  offsetX?: number;
 };
 
 const dashboardItem: SidebarItem = {
@@ -42,6 +43,7 @@ const groups: { label: string; asset?: string; items: SidebarItem[] }[] = [
         asset: "/brand/sidebar/data-management.svg",
         width: 180,
         height: 20,
+        offsetX: -6,
       },
     ],
   },
@@ -175,12 +177,13 @@ function NavigationItem({
             active ? "brightness-0 invert" : ""
           }`}
           style={
-            item.id === "data"
-              ? {
-                  filter:
-                    "brightness(0) saturate(100%) invert(37%) sepia(88%) saturate(1023%) hue-rotate(116deg) brightness(89%) contrast(102%)",
-                }
-              : undefined
+            {
+              transform: item.offsetX ? `translateX(${item.offsetX}px)` : undefined,
+              filter:
+                item.id === "data"
+                  ? "brightness(0) saturate(100%) invert(37%) sepia(88%) saturate(1023%) hue-rotate(116deg) brightness(89%) contrast(102%)"
+                  : undefined,
+            }
           }
         />
       )}
