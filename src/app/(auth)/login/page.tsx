@@ -5,15 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
-// Mock credentials — sẽ thay bằng API thật ở Phase 2
-const MOCK_USER = "admin@tronx.vn";
-const MOCK_PASS = "admin123";
-
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@tronx.vn");
+  const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,13 +23,19 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Simulate network delay
-    await new Promise((r) => setTimeout(r, 600));
 
-    if (email === MOCK_USER && password === MOCK_PASS) {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const payload = await response.json().catch(() => ({}));
+
+    if (response.ok) {
       router.push("/dashboard");
+      router.refresh();
     } else {
-      setError("Email hoặc mật khẩu không đúng.");
+      setError(payload.error ?? "Email hoặc mật khẩu không đúng.");
       setLoading(false);
     }
   };

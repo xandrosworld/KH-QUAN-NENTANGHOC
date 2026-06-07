@@ -2,9 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, ChevronDown } from "lucide-react";
 
 export default function Topbar() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-100 bg-white px-6">
       <div />
@@ -33,7 +42,11 @@ export default function Topbar() {
         </button>
 
         {/* User profile */}
-        <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 cursor-pointer transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-50"
+          title="Đăng xuất"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white">
             A
           </div>
@@ -42,7 +55,7 @@ export default function Topbar() {
             <p className="text-xs text-gray-500">Admin</p>
           </div>
           <ChevronDown size={16} className="text-gray-400" />
-        </div>
+        </button>
       </div>
     </header>
   );

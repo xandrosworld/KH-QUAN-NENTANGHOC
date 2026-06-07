@@ -39,6 +39,17 @@
 | `GET /api/imports` | ✅ Implemented | Trả lịch sử import + summary + detail |
 | `POST /api/imports` | ✅ Implemented | Nhận `.csv/.xlsx/.xls`, parse và normalize theo source |
 | `POST /api/chat` | ✅ Implemented | Trả lời data-aware theo analytics hiện tại |
+| `POST /api/auth/login` | ✅ Implemented | Admin login + httpOnly session cookie |
+| `POST /api/auth/logout` | ✅ Implemented | Xóa session |
+
+## Auth / Demo Credentials
+
+| Item | Value |
+|------|-------|
+| Email | `admin@tronx.vn` hoặc `admin` |
+| Password | `admin123` |
+| Env override | `TRONX_ADMIN_EMAIL`, `TRONX_ADMIN_PASSWORD` |
+| Session | `tronx_session` httpOnly cookie |
 
 ## Remaining Non-blocking Items
 
@@ -46,6 +57,7 @@
 |------|--------|
 | File mẫu khách hàng | ⏳ Chờ khách gửi để khóa mapping header thực tế |
 | AI provider key | ⏳ Chờ cấu hình tài khoản/API key nếu muốn dùng model bên thứ ba |
+| Persistent storage | ⏳ Cấu hình `TRONX_DATA_DIR` trỏ tới Railway volume nếu muốn import history bền qua redeploy |
 | API realtime/connect shop | ⏭️ Phase sau / scope bổ sung |
 
 ## Technical Debt

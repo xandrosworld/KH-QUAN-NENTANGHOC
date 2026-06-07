@@ -2,18 +2,25 @@
  * Import module types — Phase 1 implementation prep
  *
  * These types define the data structures for importing data from
- * Shopee, TikTok Shop, Ads, and COGS (Giá vốn) sources.
+ * Shopee, TikTok Shop, Lazada, Ads, and COGS (Giá vốn) sources.
  *
- * NOTE: Actual column mappings and business rules are pending
- * confirmation from the client via sample Excel/CSV files.
+ * The parser includes auto-detection candidates for common headers.
+ * Client sample files are only needed to lock source-specific mappings.
  */
 
 // ────────────────────────────────────────────────────────────
 // Source definitions
 // ────────────────────────────────────────────────────────────
 
-export const IMPORT_SOURCES = ['shopee', 'tiktok', 'ads', 'cogs'] as const;
+export const IMPORT_SOURCES = ['shopee', 'tiktok', 'lazada', 'ads', 'giavon'] as const;
 export type ImportSource = (typeof IMPORT_SOURCES)[number];
+
+export interface ColumnMappingCandidate {
+  field: string;
+  label: string;
+  candidates: string[];
+  required: boolean;
+}
 
 export interface ImportSourceMeta {
   id: ImportSource;
@@ -23,42 +30,74 @@ export interface ImportSourceMeta {
   acceptedExtensions: string[];
   /** Max file size in bytes */
   maxFileSize: number;
-  /**
-   * TODO: Column mapping schema per source
-   * Chờ khách cung cấp file mẫu để xác nhận cột dữ liệu.
-   * Ví dụ Shopee: Mã đơn hàng, Ngày tạo, Tổng tiền, ...
-   */
-  // columnSchema: ColumnMapping[];
+  /** Auto-detected mapping candidates used before source-specific lock-in. */
+  columnSchema: ColumnMappingCandidate[];
 }
+
+const ORDER_COLUMN_SCHEMA: ColumnMappingCandidate[] = [
+  { field: 'orderId', label: 'Mã đơn hàng', candidates: ['mã đơn', 'order id', 'order no'], required: false },
+  { field: 'date', label: 'Ngày đơn', candidates: ['ngày', 'date', 'created', 'thời gian'], required: true },
+  { field: 'productName', label: 'Tên sản phẩm', candidates: ['tên sản phẩm', 'product name', 'item name'], required: true },
+  { field: 'sku', label: 'SKU', candidates: ['sku', 'mã hàng', 'seller sku'], required: false },
+  { field: 'quantity', label: 'Số lượng', candidates: ['số lượng', 'quantity', 'qty'], required: false },
+  { field: 'revenue', label: 'Doanh thu', candidates: ['doanh thu', 'thành tiền', 'total amount', 'paid amount'], required: true },
+  { field: 'platformFee', label: 'Phí sàn', candidates: ['phí sàn', 'commission', 'platform fee', 'service fee'], required: false },
+  { field: 'status', label: 'Trạng thái', candidates: ['trạng thái', 'status', 'order status'], required: false },
+];
+
+const ADS_COLUMN_SCHEMA: ColumnMappingCandidate[] = [
+  { field: 'date', label: 'Ngày', candidates: ['ngày', 'date', 'day'], required: true },
+  { field: 'campaignName', label: 'Campaign', candidates: ['campaign', 'chiến dịch', 'tên quảng cáo'], required: true },
+  { field: 'adsCost', label: 'Chi phí Ads', candidates: ['chi phí', 'cost', 'spend', 'amount spent'], required: true },
+  { field: 'revenue', label: 'Doanh thu quy đổi', candidates: ['doanh thu', 'revenue', 'conversion value'], required: false },
+];
+
+const COGS_COLUMN_SCHEMA: ColumnMappingCandidate[] = [
+  { field: 'productName', label: 'Tên sản phẩm', candidates: ['tên sản phẩm', 'product name', 'item name'], required: true },
+  { field: 'sku', label: 'SKU', candidates: ['sku', 'mã hàng', 'seller sku'], required: false },
+  { field: 'cogs', label: 'Giá vốn', candidates: ['giá vốn', 'cogs', 'cost', 'unit cost'], required: true },
+];
 
 export const SOURCE_META: Record<ImportSource, ImportSourceMeta> = {
   shopee: {
     id: 'shopee',
     label: 'Shopee',
     description: 'Dữ liệu đơn hàng, doanh thu từ Shopee',
-    acceptedExtensions: ['.xlsx', '.xls', '.csv'],
+    acceptedExtensions: ['.xlsx', '.csv'],
     maxFileSize: 50 * 1024 * 1024, // 50MB
+    columnSchema: ORDER_COLUMN_SCHEMA,
   },
   tiktok: {
     id: 'tiktok',
     label: 'TikTok Shop',
     description: 'Dữ liệu đơn hàng, doanh thu từ TikTok Shop',
-    acceptedExtensions: ['.xlsx', '.xls', '.csv'],
+    acceptedExtensions: ['.xlsx', '.csv'],
     maxFileSize: 50 * 1024 * 1024,
+    columnSchema: ORDER_COLUMN_SCHEMA,
+  },
+  lazada: {
+    id: 'lazada',
+    label: 'Lazada',
+    description: 'Dữ liệu đơn hàng, doanh thu từ Lazada',
+    acceptedExtensions: ['.xlsx', '.csv'],
+    maxFileSize: 50 * 1024 * 1024,
+    columnSchema: ORDER_COLUMN_SCHEMA,
   },
   ads: {
     id: 'ads',
     label: 'Ads',
     description: 'Chi phí quảng cáo từ Facebook, TikTok, Google',
-    acceptedExtensions: ['.xlsx', '.xls', '.csv'],
+    acceptedExtensions: ['.xlsx', '.csv'],
     maxFileSize: 50 * 1024 * 1024,
+    columnSchema: ADS_COLUMN_SCHEMA,
   },
-  cogs: {
-    id: 'cogs',
+  giavon: {
+    id: 'giavon',
     label: 'Giá vốn',
     description: 'Giá vốn sản phẩm và chi phí liên quan',
-    acceptedExtensions: ['.xlsx', '.xls', '.csv'],
+    acceptedExtensions: ['.xlsx', '.csv'],
     maxFileSize: 50 * 1024 * 1024,
+    columnSchema: COGS_COLUMN_SCHEMA,
   },
 };
 
@@ -113,16 +152,10 @@ export interface ImportJob {
   errorRows: number | null;
   /** Error message if status === 'error' */
   errorMessage: string | null;
-  /**
-   * TODO: Parsed preview data (first N rows)
-   * Structure depends on source column schema.
-   */
-  // previewData: Record<string, unknown>[] | null;
-  /**
-   * TODO: Column mapping result
-   * Auto-detected mapping from file columns to system fields.
-   */
-  // columnMapping: ColumnMappingResult | null;
+  /** Parsed preview data (first rows) for review before final source-specific mapping. */
+  previewData?: Record<string, unknown>[] | null;
+  /** Auto-detected mapping from file columns to system fields. */
+  columnMapping?: Record<string, string> | null;
 }
 
 // ────────────────────────────────────────────────────────────

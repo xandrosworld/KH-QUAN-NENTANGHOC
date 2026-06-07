@@ -55,10 +55,10 @@ export default function VerifyCodePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <h1 className="mb-2 text-3xl font-bold text-gray-900">
         Đã gửi mã đặt lại mật khẩu!
       </h1>
-      <p className="text-gray-500 dark:text-gray-400 mb-8">
+      <p className="mb-8 text-gray-500">
         Kiểm tra hộp thư của bạn và nhập mã đặt lại mật khẩu để khôi phục tài
         khoản
       </p>
@@ -77,7 +77,7 @@ export default function VerifyCodePage() {
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="w-14 h-14 text-center text-xl font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+              className="h-14 w-14 rounded-xl border border-gray-200 bg-white text-center text-xl font-semibold text-gray-900 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           ))}
         </div>
@@ -93,22 +93,20 @@ export default function VerifyCodePage() {
           </button>
         </div>
 
-        <Link href="/reset-password">
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition shadow-sm shadow-green-600/25"
-          >
-            Gửi mã
-            <ArrowRight className="w-5 h-5" />
-          </button>
+        <Link
+          href="/reset-password"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-green-600/20 transition hover:bg-green-700"
+        >
+          Gửi mã
+          <ArrowRight className="h-5 w-5" />
         </Link>
       </form>
 
       <Link
         href="/login"
-        className="flex items-center justify-center gap-2 mt-6 text-sm font-medium text-green-600 hover:text-green-700 transition"
+        className="mt-6 flex items-center justify-center gap-2 text-sm font-semibold text-green-600 transition hover:text-green-700"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="h-4 w-4" />
         Quay lại đăng nhập
       </Link>
     </div>

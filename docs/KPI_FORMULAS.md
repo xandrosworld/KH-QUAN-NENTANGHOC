@@ -1,6 +1,6 @@
 # KPI Formulas
 
-Last updated: 2026-06-06
+Last updated: 2026-06-07
 
 ## Received From Client
 
@@ -17,11 +17,18 @@ Last updated: 2026-06-06
 | ROAS | Doanh thu / Chi phí Ads |
 | CPA | Chi phí Ads / Số đơn |
 
-## Assessment
+## Implementation Status
 
-Đủ để làm UI mock, màn cài đặt công thức/KPI và constants tính toán nội bộ.
+Đã đủ và đã được đưa vào engine tính toán Phase 1.
 
-Chưa đủ để tính production từ file import cho đến khi có file mẫu và column mapping cho Shopee, TikTok Shop, Ads và Giá vốn.
+Hiện hệ thống đã có:
+
+- `POST /api/imports`: nhận `.xlsx/.csv`, parse và normalize dữ liệu.
+- `GET /api/analytics`: tính KPI/dashboard/report từ dữ liệu đã import hoặc seed fallback.
+- `POST /api/chat`: trả lời theo analytics hiện tại.
+- Màn `Cài đặt công thức / KPI`: hiển thị bộ công thức đang áp dụng.
+
+Khi khách gửi file mẫu, phần còn lại là khóa mapping header thực tế theo từng nguồn.
 
 ## Still Needed
 
@@ -30,6 +37,5 @@ Chưa đủ để tính production từ file import cho đến khi có file mẫ
 | File mẫu Shopee/TikTok Shop | Map cột doanh thu, trạng thái đơn thành công, hoàn/hủy, phí sàn |
 | File mẫu Ads | Map cột chi phí quảng cáo theo nền tảng/campaign/ngày |
 | File mẫu Giá vốn | Map SKU, số lượng bán, giá vốn và thời điểm áp dụng |
-| Quy tắc số đơn cho CPA | CPA dùng số đơn thành công hay tổng đơn |
-| Quy tắc chia cho 0 | Margin/ROAS/CPA khi mẫu số bằng 0 |
-| Quy tắc hoàn/hủy | Tính theo số đơn hay giá trị tiền hoàn/hủy |
+| Header thực tế từng nguồn | Khóa mapping chính xác theo file export thật |
+| Nếu có file `.xls` legacy | Xuất lại thành `.xlsx` hoặc `.csv` |
