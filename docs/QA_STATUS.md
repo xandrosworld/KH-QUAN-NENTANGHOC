@@ -37,7 +37,7 @@
 |-----|--------|-------|
 | `GET /api/analytics` | ✅ Implemented | Tính KPI/dashboard từ imported records hoặc seed fallback |
 | `GET /api/imports` | ✅ Implemented | Trả lịch sử import + summary + detail |
-| `POST /api/imports` | ✅ Implemented | Nhận `.csv/.xlsx/.xls`, parse và normalize theo source |
+| `POST /api/imports` | ✅ Implemented | Nhận `.csv/.xlsx`, parse và normalize theo source |
 | `POST /api/chat` | ✅ Implemented | Trả lời data-aware theo analytics hiện tại |
 | `POST /api/auth/login` | ✅ Implemented | Admin login + httpOnly session cookie |
 | `POST /api/auth/logout` | ✅ Implemented | Xóa session |
@@ -59,6 +59,16 @@
 | AI provider key | ⏳ Chờ cấu hình tài khoản/API key nếu muốn dùng model bên thứ ba |
 | Persistent storage | ⏳ Cấu hình `TRONX_DATA_DIR` trỏ tới Railway volume nếu muốn import history bền qua redeploy |
 | API realtime/connect shop | ⏭️ Phase sau / scope bổ sung |
+
+## Import Templates
+
+Các file mẫu đã có trong `public/templates/` và nút **Tải file mẫu** trên màn Import tự đổi theo nguồn đang chọn:
+
+- `shopee-template.csv`
+- `tiktok-template.csv`
+- `ads-template.csv`
+- `giavon-template.csv`
+- `lazada-template.csv`
 
 ## Technical Debt
 

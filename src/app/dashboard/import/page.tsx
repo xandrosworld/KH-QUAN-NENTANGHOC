@@ -67,6 +67,14 @@ const sourceIconMap = {
   giavon: "/brand/source-icons/cogs.png",
 };
 
+const templateMap: Record<string, string> = {
+  shopee: "/templates/shopee-template.csv",
+  tiktok: "/templates/tiktok-template.csv",
+  lazada: "/templates/lazada-template.csv",
+  ads: "/templates/ads-template.csv",
+  giavon: "/templates/giavon-template.csv",
+};
+
 export default function ImportPage() {
   const [selectedSource, setSelectedSource] = useState("shopee");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -322,10 +330,14 @@ export default function ImportPage() {
                 <Info size={18} className="text-green-600" />
                 <span>Bạn có thể tải file mẫu để xem định dạng dữ liệu chuẩn trước khi import.</span>
               </div>
-              <button className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700">
+              <a
+                href={templateMap[selectedSource]}
+                download
+                className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+              >
                 <Download size={16} />
                 Tải file mẫu
-              </button>
+              </a>
             </div>
           </section>
 
