@@ -8,7 +8,6 @@ import type {
   NormalizedRecord,
   NormalizedRecordType,
 } from '@/lib/data-types';
-import { getSeedRecords, seedImportJobs } from './seed-data';
 import { isDatabaseEnabled, query, withTransaction } from './db';
 
 const dataDir = process.env.TRONX_DATA_DIR ?? path.join(process.cwd(), '.runtime-data');
@@ -154,13 +153,11 @@ export async function getImportedRecords(): Promise<NormalizedRecord[]> {
 }
 
 export async function getDisplayJobs(): Promise<ImportJob[]> {
-  const jobs = await getImportedJobs();
-  return jobs.length > 0 ? jobs : seedImportJobs;
+  return getImportedJobs();
 }
 
 export async function getActiveRecords(): Promise<NormalizedRecord[]> {
-  const records = await getImportedRecords();
-  return records.length > 0 ? records : getSeedRecords();
+  return getImportedRecords();
 }
 
 export async function appendImport(job: ImportJob, records: NormalizedRecord[]) {

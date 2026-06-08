@@ -7,13 +7,6 @@ import AnalyticsFilterBar from '@/components/dashboard/AnalyticsFilterBar';
 import MetricCard from '@/components/ui/MetricCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
-import {
-  dashboardKpis,
-  revenueChartData,
-  channelRevenue,
-  topProducts,
-  topCampaigns,
-} from '@/lib/mock-data';
 import type { AnalyticsActiveFilters } from '@/lib/data-types';
 import type { ChannelRevenue, ChartDataPoint, TopCampaign, TopProduct } from '@/lib/types';
 
@@ -219,13 +212,13 @@ function TopCampaignsTable({ campaigns }: { campaigns: TopCampaign[] }) {
 export default function DashboardPage() {
   const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
   const analytics = useAnalyticsData(filters);
-  const [adminName, setAdminName] = useState('Nguyễn Văn A');
-  const kpis = analytics?.dashboardKpis ?? dashboardKpis;
-  const chartData = analytics?.revenueChartData ?? revenueChartData;
-  const channelData = analytics?.channelRevenue ?? channelRevenue;
-  const productRows = analytics?.topProducts ?? topProducts;
-  const campaignRows = analytics?.topCampaigns ?? topCampaigns;
-  const totalRevenue = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
+  const [accountName, setAccountName] = useState('');
+  const kpis = analytics.dashboardKpis;
+  const chartData = analytics.revenueChartData;
+  const channelData = analytics.channelRevenue;
+  const productRows = analytics.topProducts;
+  const campaignRows = analytics.topCampaigns;
+  const totalRevenue = analytics.totals.revenue;
 
   useEffect(() => {
     let mounted = true;
@@ -233,7 +226,7 @@ export default function DashboardPage() {
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (!mounted || !payload?.profile?.name) return;
-        setAdminName(payload.profile.name);
+        setAccountName(payload.profile.name);
       })
       .catch(() => undefined);
 
@@ -245,7 +238,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleProfileUpdated = (event: Event) => {
       const profile = (event as CustomEvent<{ name?: string }>).detail;
-      if (profile?.name) setAdminName(profile.name);
+      if (profile?.name) setAccountName(profile.name);
     };
 
     window.addEventListener('tronx-profile-updated', handleProfileUpdated);
@@ -258,7 +251,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Chào mừng trở lại, {adminName}!
+            Chào mừng trở lại{accountName ? `, ${accountName}` : ''}!
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Tổng quan tình hình kinh doanh của bạn
@@ -268,8 +261,8 @@ export default function DashboardPage() {
 
       <AnalyticsFilterBar
         filters={filters}
-        options={analytics?.availableFilters}
-        recordCount={analytics?.recordCount}
+        options={analytics.availableFilters}
+        recordCount={analytics.recordCount}
         onChange={setFilters}
       />
 

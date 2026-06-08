@@ -121,7 +121,7 @@ export default function RegisterPage() {
       </h1>
       <p className="mb-8 text-gray-500">
         {step === "form"
-          ? "Tạo tài khoản quản trị để bắt đầu sử dụng TronX."
+          ? "Tạo tài khoản để bắt đầu sử dụng TronX."
           : "Nhập mã OTP đã gửi tới email của bạn."}
       </p>
 

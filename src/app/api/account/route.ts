@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserProfile, updateUserProfile } from '@/lib/server/account-store';
-import { getSessionPayloadFromRequest } from '@/lib/server/request-session';
+import { requireApiSession } from '@/lib/server/api-auth';
 
 const MAX_AVATAR_LENGTH = 900_000;
 
@@ -13,13 +13,17 @@ function isValidAvatar(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  const session = await getSessionPayloadFromRequest(request);
-  const profile = await getUserProfile(session?.sub);
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
+  const profile = await getUserProfile(auth.session.sub);
   return NextResponse.json({ profile });
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSessionPayloadFromRequest(request);
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const name = String(body.name ?? '').trim();
   const email = String(body.email ?? '').trim();
@@ -37,12 +41,19 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Anh dai dien khong hop le hoac dung luong qua lon.' }, { status: 400 });
   }
 
-  const profile = await updateUserProfile(session?.sub, {
-    name,
-    email,
-    role: 'Admin',
-    avatarDataUrl: avatarDataUrl || undefined,
-  });
+  let profile;
+  try {
+    profile = await updateUserProfile(auth.session.sub, {
+      name,
+      email,
+      avatarDataUrl: avatarDataUrl || undefined,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message || 'Khong luu duoc ho so.' },
+      { status: 400 },
+    );
+  }
 
   return NextResponse.json({ profile });
 }

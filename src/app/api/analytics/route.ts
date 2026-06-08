@@ -6,11 +6,15 @@ import {
   parseAnalyticsFilters,
 } from '@/lib/analytics-filters';
 import { buildAnalytics } from '@/lib/server/analytics';
+import { requireApiSession } from '@/lib/server/api-auth';
 import { getActiveRecords } from '@/lib/server/data-store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const records = await getActiveRecords();
   const filters = parseAnalyticsFilters(new URL(request.url).searchParams);
   const filteredRecords = filterAnalyticsRecords(records, filters);

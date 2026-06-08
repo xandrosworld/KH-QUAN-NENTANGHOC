@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { buildAnalytics } from '@/lib/server/analytics';
+import { requireApiSession } from '@/lib/server/api-auth';
 import { getActiveRecords } from '@/lib/server/data-store';
 import { askGeminiWithAnalytics, hasGeminiConfig } from '@/lib/server/gemini';
 
@@ -18,6 +19,9 @@ function includesAny(message: string, keywords: string[]) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const message = String(body.message ?? '').trim().toLowerCase();
   const analytics = buildAnalytics(await getActiveRecords());

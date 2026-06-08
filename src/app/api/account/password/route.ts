@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { changeAdminPassword } from '@/lib/server/account-store';
-import { getSessionPayloadFromRequest } from '@/lib/server/request-session';
+import { requireApiSession } from '@/lib/server/api-auth';
 
 export async function POST(request: Request) {
-  const session = await getSessionPayloadFromRequest(request);
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const currentPassword = String(body.currentPassword ?? '');
   const newPassword = String(body.newPassword ?? '');
@@ -17,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Mat khau xac nhan khong khop.' }, { status: 400 });
   }
 
-  const result = await changeAdminPassword(currentPassword, newPassword, session?.sub);
+  const result = await changeAdminPassword(currentPassword, newPassword, auth.session.sub);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });

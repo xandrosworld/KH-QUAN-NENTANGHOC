@@ -11,7 +11,7 @@ const schemaStatements = [
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'Admin',
+      role TEXT NOT NULL DEFAULT 'User',
       avatar_data_url TEXT,
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
@@ -21,6 +21,7 @@ const schemaStatements = [
       last_login_at TIMESTAMPTZ
     )
   `,
+  `ALTER TABLE users ALTER COLUMN role SET DEFAULT 'User'`,
   `CREATE INDEX IF NOT EXISTS users_email_idx ON users (LOWER(email))`,
   `
     CREATE TABLE IF NOT EXISTS email_otps (

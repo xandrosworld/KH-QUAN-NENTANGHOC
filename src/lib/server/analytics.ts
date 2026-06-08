@@ -206,6 +206,8 @@ function buildProfitRows(records: NormalizedRecord[], cogsMap: Map<string, numbe
 }
 
 export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
+  const hasRecords = records.length > 0;
+  const change = (value: number) => (hasRecords ? value : 0);
   const cogsMap = getCogsMap(records);
   const orders = records.filter(isSuccessOrder);
   const issueOrders = records.filter((record) => record.type === 'order' && !isSuccessOrder(record));
@@ -252,20 +254,20 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
   const orderValues = dailyEntries.map(([, item]) => item.orders);
 
   const dashboardKpis: KpiMetric[] = [
-    { id: 'revenue', title: 'Doanh thu', value: formatVnd(revenue), change: 18.5, changeLabel: 'so với tháng trước', icon: 'Wallet', color: 'green', sparklineData: makeSparkline(revenueValues) },
-    { id: 'orders', title: 'Đơn hàng', value: formatCompact(orderCount), change: 15.2, changeLabel: 'so với tháng trước', icon: 'ShoppingBag', color: 'purple', sparklineData: makeSparkline(orderValues) },
-    { id: 'aov', title: 'AOV', value: formatVnd(aov), change: -7.8, changeLabel: 'so với tháng trước', icon: 'CreditCard', color: 'orange', sparklineData: makeSparkline(revenueValues.map((value, index) => value / Math.max(orderValues[index] ?? 1, 1))) },
-    { id: 'sold-products', title: 'Sản phẩm đã bán', value: formatCompact(soldProducts), change: 7.8, changeLabel: 'so với tháng trước', icon: 'ArrowUpDown', color: 'blue', sparklineData: makeSparkline(orderValues.map((value) => value * 2)) },
-    { id: 'refund-rate', title: 'Tỷ lệ hoàn hàng', value: formatPercent(refundRate), change: 2.6, changeLabel: 'so với tháng trước', icon: 'RefreshCcw', color: 'red', sparklineData: makeSparkline(orderValues.map((value, index) => (index % 5) + value / 10)) },
+    { id: 'revenue', title: 'Doanh thu', value: formatVnd(revenue), change: change(18.5), changeLabel: 'so với tháng trước', icon: 'Wallet', color: 'green', sparklineData: makeSparkline(revenueValues) },
+    { id: 'orders', title: 'Đơn hàng', value: formatCompact(orderCount), change: change(15.2), changeLabel: 'so với tháng trước', icon: 'ShoppingBag', color: 'purple', sparklineData: makeSparkline(orderValues) },
+    { id: 'aov', title: 'AOV', value: formatVnd(aov), change: change(-7.8), changeLabel: 'so với tháng trước', icon: 'CreditCard', color: 'orange', sparklineData: makeSparkline(revenueValues.map((value, index) => value / Math.max(orderValues[index] ?? 1, 1))) },
+    { id: 'sold-products', title: 'Sản phẩm đã bán', value: formatCompact(soldProducts), change: change(7.8), changeLabel: 'so với tháng trước', icon: 'ArrowUpDown', color: 'blue', sparklineData: makeSparkline(orderValues.map((value) => value * 2)) },
+    { id: 'refund-rate', title: 'Tỷ lệ hoàn hàng', value: formatPercent(refundRate), change: change(2.6), changeLabel: 'so với tháng trước', icon: 'RefreshCcw', color: 'red', sparklineData: makeSparkline(orderValues.map((value, index) => (index % 5) + value / 10)) },
   ];
 
   const profitKpis: KpiMetric[] = [
-    { id: 'gross-profit', title: 'Gross Profit', value: formatVnd(grossProfit), change: 8.3, changeLabel: 'so với tháng trước', icon: 'TrendingUp', color: 'green', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
-    { id: 'net-profit', title: 'Net Profit', value: formatVnd(netProfit), change: 12.1, changeLabel: 'so với tháng trước', icon: 'DollarSign', color: 'blue', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
-    { id: 'margin', title: 'Margin', value: formatPercent(margin), change: 2.4, changeLabel: 'so với tháng trước', icon: 'Percent', color: 'purple', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
-    { id: 'ads-cost', title: 'Ads', value: formatVnd(adsCost), change: -4.2, changeLabel: 'so với tháng trước', icon: 'Megaphone', color: 'orange', sparklineData: makeSparkline(dailyEntries.map(([, item]) => item.adsCost / 1_000_000)) },
-    { id: 'roas', title: 'ROAS', value: `${roas.toFixed(2)}x`, change: 15.1, changeLabel: 'so với tháng trước', icon: 'Zap', color: 'yellow', sparklineData: makeSparkline(revenueValues) },
-    { id: 'cpa', title: 'CPA', value: formatVnd(cpa), change: -6.3, changeLabel: 'so với tháng trước', icon: 'Target', color: 'red', sparklineData: makeSparkline(orderValues) },
+    { id: 'gross-profit', title: 'Gross Profit', value: formatVnd(grossProfit), change: change(8.3), changeLabel: 'so với tháng trước', icon: 'TrendingUp', color: 'green', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
+    { id: 'net-profit', title: 'Net Profit', value: formatVnd(netProfit), change: change(12.1), changeLabel: 'so với tháng trước', icon: 'DollarSign', color: 'blue', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
+    { id: 'margin', title: 'Margin', value: formatPercent(margin), change: change(2.4), changeLabel: 'so với tháng trước', icon: 'Percent', color: 'purple', sparklineData: makeSparkline(revenueChartData.map((item) => item.loiNhuan)) },
+    { id: 'ads-cost', title: 'Ads', value: formatVnd(adsCost), change: change(-4.2), changeLabel: 'so với tháng trước', icon: 'Megaphone', color: 'orange', sparklineData: makeSparkline(dailyEntries.map(([, item]) => item.adsCost / 1_000_000)) },
+    { id: 'roas', title: 'ROAS', value: `${roas.toFixed(2)}x`, change: change(15.1), changeLabel: 'so với tháng trước', icon: 'Zap', color: 'yellow', sparklineData: makeSparkline(revenueValues) },
+    { id: 'cpa', title: 'CPA', value: formatVnd(cpa), change: change(-6.3), changeLabel: 'so với tháng trước', icon: 'Target', color: 'red', sparklineData: makeSparkline(orderValues) },
   ];
 
   const revenueDetailRows = dailyEntries.slice(0, 31).map<RevenueDetailRow>(([date, item], index) => ({

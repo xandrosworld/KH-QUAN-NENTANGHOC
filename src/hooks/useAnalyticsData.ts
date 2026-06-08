@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { buildAnalyticsSearchParams } from "@/lib/analytics-filters";
+import { emptyAnalyticsPayload } from "@/lib/empty-analytics";
 import type { AnalyticsActiveFilters, AnalyticsPayload } from "@/lib/data-types";
 
 export function useAnalyticsData(filters: AnalyticsActiveFilters = {}) {
-  const [data, setData] = useState<AnalyticsPayload | null>(null);
+  const [data, setData] = useState<AnalyticsPayload>(emptyAnalyticsPayload);
   const queryString = useMemo(() => {
     const params = buildAnalyticsSearchParams(filters);
     const query = params.toString();

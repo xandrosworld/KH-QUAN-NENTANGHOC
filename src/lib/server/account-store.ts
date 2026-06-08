@@ -238,6 +238,14 @@ export async function updateUserProfile(userId: string | undefined, profile: Par
       avatarDataUrl: profile.avatarDataUrl,
     };
 
+    const existingEmail = await query<UserRow>(
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND id <> $2 LIMIT 1',
+      [nextProfile.email, currentUser.id],
+    );
+    if (existingEmail.rowCount) {
+      throw new Error('Email nay da co tai khoan.');
+    }
+
     const result = await query<UserRow>(
       `
         UPDATE users
@@ -439,7 +447,7 @@ export async function requestRegistrationOtp({
   const passwordHash = createPasswordHash(password);
   const otp = await createOtp(normalizedEmail, 'register', {
     name: displayName,
-    role: 'Admin',
+    role: 'User',
     passwordHash: passwordHash.passwordHash,
     passwordSalt: passwordHash.passwordSalt,
   });
@@ -489,7 +497,7 @@ export async function verifyRegistrationOtp(email: string, otp: string) {
       randomUUID(),
       normalizedEmail,
       metadata.name || normalizedEmail,
-      metadata.role || 'Admin',
+      metadata.role || 'User',
       metadata.passwordHash,
       metadata.passwordSalt,
     ],

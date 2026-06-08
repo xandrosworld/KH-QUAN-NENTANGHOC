@@ -4,14 +4,13 @@ import { Globe, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import AnalyticsFilterBar from "@/components/dashboard/AnalyticsFilterBar";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
-import { channelRevenue } from "@/lib/mock-data";
 import type { AnalyticsActiveFilters } from "@/lib/data-types";
 
 export default function PlatformsReportPage() {
   const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
   const analytics = useAnalyticsData(filters);
-  const channels = analytics?.channelRevenue ?? channelRevenue;
-  const total = analytics?.totals.revenue ?? channels.reduce((sum, item) => sum + item.value, 0);
+  const channels = analytics.channelRevenue;
+  const total = analytics.totals.revenue;
 
   return (
     <div className="space-y-6">
@@ -22,8 +21,8 @@ export default function PlatformsReportPage() {
 
       <AnalyticsFilterBar
         filters={filters}
-        options={analytics?.availableFilters}
-        recordCount={analytics?.recordCount}
+        options={analytics.availableFilters}
+        recordCount={analytics.recordCount}
         onChange={setFilters}
       />
 

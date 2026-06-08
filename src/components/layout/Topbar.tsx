@@ -26,9 +26,9 @@ type AdminProfile = {
 type ModalView = "profile" | "password" | null;
 
 const defaultProfile: AdminProfile = {
-  name: "Nguyễn Văn A",
-  email: "admin@tronx.vn",
-  role: "Admin",
+  name: "Tài khoản",
+  email: "",
+  role: "User",
 };
 
 function initials(name: string) {
@@ -169,7 +169,7 @@ export default function Topbar() {
 
     setProfile(data.profile);
     setProfileForm(data.profile);
-    setMessage("Đã lưu hồ sơ admin.");
+    setMessage("Đã lưu hồ sơ tài khoản.");
     window.dispatchEvent(new CustomEvent("tronx-profile-updated", { detail: data.profile }));
   };
 
@@ -247,6 +247,13 @@ export default function Topbar() {
                     onClick={() => openModal("profile")}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-700"
                   >
+                    <Camera size={17} />
+                    Thay ảnh đại diện
+                  </button>
+                  <button
+                    onClick={() => openModal("profile")}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-700"
+                  >
                     <User size={17} />
                     Hồ sơ tài khoản
                   </button>
@@ -281,7 +288,7 @@ export default function Topbar() {
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   {modalView === "profile"
-                    ? "Thông tin hiển thị cho tài khoản quản trị."
+                    ? "Thông tin hiển thị cho tài khoản của bạn."
                     : "Cập nhật mật khẩu đăng nhập dashboard."}
                 </p>
               </div>
@@ -380,7 +387,7 @@ export default function Topbar() {
             ) : (
               <form onSubmit={savePassword} className="space-y-5 p-6">
                 <div className="rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700">
-                  Mật khẩu mới sẽ được lưu cho tài khoản admin hiện tại và dùng cho lần đăng nhập tiếp theo.
+                  Mật khẩu mới sẽ được lưu cho tài khoản hiện tại và dùng cho lần đăng nhập tiếp theo.
                 </div>
 
                 <div className="grid gap-4">

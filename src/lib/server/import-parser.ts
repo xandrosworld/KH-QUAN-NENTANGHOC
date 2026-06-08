@@ -301,7 +301,7 @@ function getDateRange(records: NormalizedRecord[]) {
   };
 }
 
-export async function parseImportFile(file: File, source: ImportSource, importedBy = 'Nguyễn Văn A'): Promise<ImportResult> {
+export async function parseImportFile(file: File, source: ImportSource, importedBy = 'Tài khoản'): Promise<ImportResult> {
   const jobId = randomUUID();
   const rows = await readRows(file);
   const errors: string[] = [];

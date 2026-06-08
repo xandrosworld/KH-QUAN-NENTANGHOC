@@ -7,12 +7,6 @@ import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
-import {
-  revenueKpis,
-  revenueByTimeData,
-  channelRevenue,
-  revenueDetailRows,
-} from '@/lib/mock-data';
 import type { AnalyticsActiveFilters } from '@/lib/data-types';
 import type { ChannelRevenue } from '@/lib/types';
 
@@ -49,11 +43,11 @@ function getDonutGradient(data: ChannelRevenue[]) {
 export default function RevenueReportPage() {
   const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
   const analytics = useAnalyticsData(filters);
-  const kpis = analytics?.revenueKpis ?? revenueKpis;
-  const timeData = analytics?.revenueByTimeData ?? revenueByTimeData;
-  const channelData = analytics?.channelRevenue ?? channelRevenue;
-  const detailRows = analytics?.revenueDetailRows ?? revenueDetailRows;
-  const total = analytics?.totals.revenue ?? channelRevenue.reduce((sum, item) => sum + item.value, 0);
+  const kpis = analytics.revenueKpis;
+  const timeData = analytics.revenueByTimeData;
+  const channelData = analytics.channelRevenue;
+  const detailRows = analytics.revenueDetailRows;
+  const total = analytics.totals.revenue;
   const legendColumns = { gridTemplateColumns: 'minmax(90px, 1fr) 42px 142px' };
 
   return (
@@ -72,8 +66,8 @@ export default function RevenueReportPage() {
 
         <AnalyticsFilterBar
           filters={filters}
-          options={analytics?.availableFilters}
-          recordCount={analytics?.recordCount}
+          options={analytics.availableFilters}
+          recordCount={analytics.recordCount}
           onChange={setFilters}
         />
 

@@ -14,7 +14,6 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { dataManagementRows, fileDetail } from '@/lib/mock-data';
 import type { ImportJob } from '@/lib/data-types';
 import type { DataManagementRow, FileDetail } from '@/lib/types';
 
@@ -85,6 +84,7 @@ const summaryCards = [
 
 const detailTabs = ['Tổng quan', 'Dữ liệu', 'Lịch sử xử lý'];
 const pageSize = 8;
+const emptySummary: Summary = { total: 0, success: 0, error: 0, processing: 0 };
 
 const getSourceIcon = (source: string) => {
   const value = source.toLowerCase();
@@ -149,12 +149,12 @@ function buildFileDetail(job: ImportJob): FileDetail {
 
 export default function DataManagementPage() {
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<string | null>('1');
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState(0);
-  const [rows, setRows] = useState<DataManagementRow[]>(dataManagementRows);
+  const [rows, setRows] = useState<DataManagementRow[]>([]);
   const [jobs, setJobs] = useState<ImportJob[]>([]);
-  const [detail, setDetail] = useState<FileDetail>(fileDetail);
-  const [summary, setSummary] = useState<Summary>({ total: 128, success: 112, error: 8, processing: 8 });
+  const [detail, setDetail] = useState<FileDetail | null>(null);
+  const [summary, setSummary] = useState<Summary>(emptySummary);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,13 +162,12 @@ export default function DataManagementPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const applyImportPayload = useCallback((payload: ImportsPayload) => {
-    if (payload.rows?.length) {
-      setRows(payload.rows);
-      setSelectedFile(payload.rows[0].id);
-    }
+    const nextRows = payload.rows ?? [];
+    setRows(nextRows);
+    setSelectedFile(nextRows[0]?.id ?? null);
     if (payload.jobs) setJobs(payload.jobs);
-    if (payload.fileDetail) setDetail(payload.fileDetail);
-    if (payload.summary) setSummary(payload.summary);
+    setDetail(payload.fileDetail ?? null);
+    setSummary(payload.summary ?? emptySummary);
   }, []);
 
   const loadImports = useCallback(async () => {
@@ -225,7 +224,6 @@ export default function DataManagementPage() {
   const selectedDetail = selectedJob ? buildFileDetail(selectedJob) : detail;
   const detailStatus = selectedRow?.status ?? selectedJob?.status ?? 'success';
   const detailStatusConfig = statusConfig[detailStatus];
-  const isSystemSeed = selectedFile === 'system-import-2026-06';
   const firstVisibleRow = filteredRows.length === 0 ? 0 : (normalizedPage - 1) * pageSize + 1;
   const lastVisibleRow = Math.min(normalizedPage * pageSize, filteredRows.length);
 
@@ -262,11 +260,6 @@ export default function DataManagementPage() {
 
   const handleDelete = useCallback(
     async (jobId: string, fileName: string) => {
-      if (jobId === 'system-import-2026-06') {
-        setActionMessage('File dữ liệu khởi tạo của hệ thống không thể xóa tại đây.');
-        return;
-      }
-
       const confirmed = window.confirm(`Xóa file import "${fileName}" và toàn bộ dữ liệu liên quan?`);
       if (!confirmed) return;
 
@@ -489,9 +482,9 @@ export default function DataManagementPage() {
                                 event.stopPropagation();
                                 void handleDelete(row.id, row.fileName);
                               }}
-                              disabled={deleting || row.id === 'system-import-2026-06'}
+                              disabled={deleting}
                               className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                              title={row.id === 'system-import-2026-06' ? 'Dữ liệu hệ thống' : 'Xóa import'}
+                              title="Xóa import"
                             >
                               {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                             </button>
@@ -532,7 +525,7 @@ export default function DataManagementPage() {
           </div>
         </div>
 
-        {selectedFile && selectedRow && (
+        {selectedFile && selectedRow && selectedDetail && (
           <div className="h-fit rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold text-gray-900">
@@ -709,9 +702,8 @@ export default function DataManagementPage() {
               </button>
               <button
                 onClick={() => void handleDelete(selectedFile, selectedDetail.fileName)}
-                disabled={isDeleting === selectedFile || isSystemSeed}
+                disabled={isDeleting === selectedFile}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                title={isSystemSeed ? 'Dữ liệu hệ thống' : undefined}
               >
                 {isDeleting === selectedFile ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 Xóa dữ liệu

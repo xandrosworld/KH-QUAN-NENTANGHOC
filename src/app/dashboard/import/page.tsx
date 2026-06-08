@@ -13,7 +13,6 @@ import {
   MessageSquare,
   X,
 } from "lucide-react";
-import { importHistory } from "@/lib/mock-data";
 import { formatFileSize, getDroppedFile, validateFile } from "@/lib/file-utils";
 import type { ImportHistoryItem } from "@/lib/types";
 
@@ -79,9 +78,9 @@ export default function ImportPage() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [historyItems, setHistoryItems] = useState<ImportHistoryItem[]>(importHistory);
+  const [historyItems, setHistoryItems] = useState<ImportHistoryItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [importedByName, setImportedByName] = useState("Nguyễn Văn A");
+  const [importedByName, setImportedByName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadImportHistory = useCallback(async () => {
@@ -109,9 +108,9 @@ export default function ImportPage() {
         records: `${job.validRows.toLocaleString("vi-VN")} dòng`,
         status: job.status,
       }));
-      if (items.length) setHistoryItems(items);
+      setHistoryItems(items);
     } catch {
-      // Giữ lịch sử mặc định nếu API tạm thời không phản hồi.
+      setHistoryItems([]);
     }
   }, []);
 
@@ -141,10 +140,10 @@ export default function ImportPage() {
           records: `${job.validRows.toLocaleString("vi-VN")} dòng`,
           status: job.status,
         }));
-        if (items.length) setHistoryItems(items);
+        setHistoryItems(items);
       })
       .catch(() => {
-        // Giữ lịch sử mặc định nếu API tạm thời không phản hồi.
+        setHistoryItems([]);
       });
     return () => {
       mounted = false;
@@ -231,7 +230,7 @@ export default function ImportPage() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("source", selectedSource);
-    formData.append("importedBy", importedByName);
+    if (importedByName) formData.append("importedBy", importedByName);
 
     try {
       const response = await fetch("/api/imports", {
@@ -534,6 +533,11 @@ export default function ImportPage() {
                 </div>
               );
             })}
+            {historyItems.length === 0 && (
+              <div className="rounded-lg border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-500">
+                Chưa có file import nào.
+              </div>
+            )}
           </div>
         </aside>
       </div>

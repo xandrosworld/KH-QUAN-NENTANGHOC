@@ -7,13 +7,6 @@ import MetricCard from '@/components/ui/MetricCard';
 import ChartCard from '@/components/ui/ChartCard';
 import SvgLineChart from '@/components/ui/SvgLineChart';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
-import {
-  profitKpis,
-  profitChartData,
-  costStructure,
-  channelProfits,
-  profitDetailRows,
-} from '@/lib/mock-data';
 import type { AnalyticsActiveFilters } from '@/lib/data-types';
 
 const profitColumns = [
@@ -33,11 +26,11 @@ const profitColumns = [
 export default function ProfitReportPage() {
   const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
   const analytics = useAnalyticsData(filters);
-  const kpis = analytics?.profitKpis ?? profitKpis;
-  const chartData = analytics?.profitChartData ?? profitChartData;
-  const costs = analytics?.costStructure ?? costStructure;
-  const profits = analytics?.channelProfits ?? channelProfits;
-  const detailRows = analytics?.profitDetailRows ?? profitDetailRows;
+  const kpis = analytics.profitKpis;
+  const chartData = analytics.profitChartData;
+  const costs = analytics.costStructure;
+  const profits = analytics.channelProfits;
+  const detailRows = analytics.profitDetailRows;
   const costRadius = 64;
   const costCircumference = 2 * Math.PI * costRadius;
   const maxChannelProfit = Math.max(...profits.map((channel) => channel.value), 1);
@@ -68,8 +61,8 @@ export default function ProfitReportPage() {
 
         <AnalyticsFilterBar
           filters={filters}
-          options={analytics?.availableFilters}
-          recordCount={analytics?.recordCount}
+          options={analytics.availableFilters}
+          recordCount={analytics.recordCount}
           onChange={setFilters}
         />
 

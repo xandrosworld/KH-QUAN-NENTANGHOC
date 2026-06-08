@@ -146,7 +146,7 @@ export default function ChatbotButton() {
           src="/brand/ai-chatbot.svg"
           alt=""
           width={74}
-          height={73}
+          height={74}
           className="h-[74px] w-[74px]"
           priority
         />

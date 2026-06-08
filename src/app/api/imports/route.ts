@@ -8,8 +8,8 @@ import {
   getDisplayJobs,
   resetImportedData,
 } from '@/lib/server/data-store';
+import { requireApiSession } from '@/lib/server/api-auth';
 import { parseImportFile } from '@/lib/server/import-parser';
-import { getSessionPayloadFromRequest } from '@/lib/server/request-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +61,9 @@ function safeExportName(fileName: string) {
 }
 
 export async function GET(request: Request) {
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const url = new URL(request.url);
   const exportJobId = url.searchParams.get('jobId');
   const format = url.searchParams.get('format');
@@ -96,13 +99,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getSessionPayloadFromRequest(request);
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const formData = await request.formData();
   const file = formData.get('file');
   const source = formData.get('source');
   const importedBy = typeof formData.get('importedBy') === 'string'
     ? String(formData.get('importedBy'))
-    : 'Nguyễn Văn A';
+    : auth.session.name || auth.session.email;
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'Thiếu file import.' }, { status: 400 });
@@ -114,7 +119,7 @@ export async function POST(request: Request) {
 
   let result;
   try {
-    result = await parseImportFile(file, source, session?.name || session?.email || importedBy);
+    result = await parseImportFile(file, source, auth.session.name || auth.session.email || importedBy);
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || 'Không đọc được file import.' },
@@ -132,6 +137,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await requireApiSession(request);
+  if (auth.response) return auth.response;
+
   const url = new URL(request.url);
   const jobId = url.searchParams.get('jobId');
 

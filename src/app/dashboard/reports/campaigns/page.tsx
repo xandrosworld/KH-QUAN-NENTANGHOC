@@ -4,15 +4,14 @@ import { Megaphone, Target, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import AnalyticsFilterBar from "@/components/dashboard/AnalyticsFilterBar";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
-import { topCampaigns } from "@/lib/mock-data";
 import type { AnalyticsActiveFilters } from "@/lib/data-types";
 
 export default function CampaignsReportPage() {
   const [filters, setFilters] = useState<AnalyticsActiveFilters>({});
   const analytics = useAnalyticsData(filters);
-  const campaigns = analytics?.topCampaigns ?? topCampaigns;
-  const adsCost = analytics?.totals.adsCost ?? 116230000;
-  const roas = analytics?.totals.roas ?? 6.4;
+  const campaigns = analytics.topCampaigns;
+  const adsCost = analytics.totals.adsCost;
+  const roas = analytics.totals.roas;
 
   return (
     <div className="space-y-6">
@@ -33,8 +32,8 @@ export default function CampaignsReportPage() {
 
       <AnalyticsFilterBar
         filters={filters}
-        options={analytics?.availableFilters}
-        recordCount={analytics?.recordCount}
+        options={analytics.availableFilters}
+        recordCount={analytics.recordCount}
         onChange={setFilters}
       />
 
