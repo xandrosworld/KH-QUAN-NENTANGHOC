@@ -22,11 +22,11 @@ function RevenueChart({ data }: { data: ChartDataPoint[] }) {
       <div className="flex items-center gap-6 mb-4">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-green-500" />
-          <span className="text-sm text-gray-500">Tháng này</span>
+          <span className="text-sm text-gray-500">Doanh thu</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-sm text-gray-500">Tháng trước</span>
+          <span className="text-sm text-gray-500">Lợi nhuận</span>
         </div>
       </div>
       <div className="h-60">

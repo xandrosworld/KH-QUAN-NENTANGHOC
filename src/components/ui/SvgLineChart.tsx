@@ -31,16 +31,25 @@ export default function SvgLineChart({ data, series, viewBoxWidth = 620 }: SvgLi
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const values = data.flatMap((item) => series.map((line) => getValue(item, line.key)));
-  const maxValue = Math.max(...values, 1);
-  const yMax = Math.ceil(maxValue / 20) * 20;
+  const rawMin = Math.min(...values, 0);
+  const rawMax = Math.max(...values, 0);
+  const range = rawMax - rawMin || 1;
+  const paddingValue = range * 0.08;
+  const yMin = rawMin - paddingValue;
+  const yMax = rawMax + paddingValue;
   const tickCount = 5;
-  const yTicks = Array.from({ length: tickCount }, (_, index) => Math.round((yMax / (tickCount - 1)) * index));
+  const yTicks = Array.from({ length: tickCount }, (_, index) => yMin + ((yMax - yMin) * index) / (tickCount - 1));
   const xTickIndexes = data
     .map((_, index) => index)
     .filter((index) => data.length <= 8 || index === 0 || index === data.length - 1 || index % 2 === 0);
 
   const getX = (index: number) => padding.left + (chartWidth * index) / Math.max(data.length - 1, 1);
-  const getY = (value: number) => padding.top + chartHeight - (chartHeight * value) / yMax;
+  const getY = (value: number) => {
+    const normalized = (value - yMin) / (yMax - yMin);
+    return padding.top + chartHeight - chartHeight * normalized;
+  };
+  const zeroLineY = yMin < 0 && yMax > 0 ? getY(0) : null;
+  const formatTick = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
 
   return (
     <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${width} ${height}`} role="img" aria-hidden="true">
@@ -59,11 +68,22 @@ export default function SvgLineChart({ data, series, viewBoxWidth = 620 }: SvgLi
               strokeWidth="1"
             />
             <text x={padding.left - 12} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="12">
-              {tick}
+              {formatTick(tick)}
             </text>
           </g>
         );
       })}
+
+      {zeroLineY !== null && (
+        <line
+          x1={padding.left}
+          y1={zeroLineY}
+          x2={width - padding.right}
+          y2={zeroLineY}
+          stroke="#cbd5e1"
+          strokeWidth="1.25"
+        />
+      )}
 
       {xTickIndexes.map((index) => (
         <text
