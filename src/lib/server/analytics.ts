@@ -19,6 +19,9 @@ import type {
 const sourceColors: Record<string, string> = {
   Shopee: '#EE4D2D',
   'TikTok Shop': '#000000',
+  'Shopee Ads': '#EE4D2D',
+  'TikTok Ads': '#111827',
+  'TikTok Live': '#06B6D4',
   Lazada: '#F59E0B',
   Ads: '#2563EB',
   Khác: '#3B82F6',
@@ -43,7 +46,11 @@ function toTime(date: string) {
 }
 
 function isSuccessOrder(record: NormalizedRecord) {
-  return record.type === 'order' && record.status !== 'cancelled' && record.status !== 'refunded';
+  return record.type === 'order' && record.status === 'success';
+}
+
+function isIssueOrder(record: NormalizedRecord) {
+  return record.type === 'order' && (record.status === 'cancelled' || record.status === 'refunded');
 }
 
 function getCogsForOrder(record: NormalizedRecord, cogsMap: Map<string, number>) {
@@ -60,15 +67,28 @@ function makeSparkline(values: number[]) {
 }
 
 function getDailyMap(records: NormalizedRecord[], cogsMap: Map<string, number>) {
-  const daily = new Map<string, { revenue: number; netProfit: number; adsCost: number; cogs: number; orders: number }>();
+  const daily = new Map<string, {
+    revenue: number;
+    netProfit: number;
+    adsCost: number;
+    cogs: number;
+    orders: number;
+    soldProducts: number;
+    issues: number;
+  }>();
   records.forEach((record) => {
-    const item = daily.get(record.date) ?? { revenue: 0, netProfit: 0, adsCost: 0, cogs: 0, orders: 0 };
+    const item = daily.get(record.date) ?? { revenue: 0, netProfit: 0, adsCost: 0, cogs: 0, orders: 0, soldProducts: 0, issues: 0 };
     if (isSuccessOrder(record)) {
       const cogs = getCogsForOrder(record, cogsMap);
       item.revenue += record.revenue;
       item.cogs += cogs;
       item.netProfit += record.revenue - cogs - record.platformFee;
       item.orders += 1;
+      item.soldProducts += record.quantity;
+    }
+    if (isIssueOrder(record)) {
+      item.issues += 1;
+      item.netProfit -= record.refundAmount || record.revenue;
     }
     if (record.type === 'ads') {
       item.adsCost += record.adsCost;
@@ -210,9 +230,10 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
   const change = (value: number) => (hasRecords ? value : 0);
   const cogsMap = getCogsMap(records);
   const orders = records.filter(isSuccessOrder);
-  const issueOrders = records.filter((record) => record.type === 'order' && !isSuccessOrder(record));
+  const issueOrders = records.filter(isIssueOrder);
   const revenue = orders.reduce((sum, record) => sum + record.revenue, 0);
   const orderCount = new Set(orders.map((record) => record.orderId || record.id)).size;
+  const issueOrderCount = new Set(issueOrders.map((record) => record.orderId || record.id)).size;
   const soldProducts = orders.reduce((sum, record) => sum + record.quantity, 0);
   const platformFee = orders.reduce((sum, record) => sum + record.platformFee, 0);
   const adsCost = records.filter((record) => record.type === 'ads').reduce((sum, record) => sum + record.adsCost, 0);
@@ -221,7 +242,7 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
   const grossProfit = revenue - cogs;
   const netProfit = grossProfit - adsCost - platformFee - refundAmount;
   const aov = revenue / Math.max(orderCount, 1);
-  const refundRate = (issueOrders.length / Math.max(orderCount + issueOrders.length, 1)) * 100;
+  const refundRate = (issueOrderCount / Math.max(orderCount + issueOrderCount, 1)) * 100;
   const margin = (netProfit / Math.max(revenue, 1)) * 100;
   const roas = revenue / Math.max(adsCost, 1);
   const cpa = adsCost / Math.max(orderCount, 1);
@@ -252,13 +273,17 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
   }));
   const revenueValues = dailyEntries.map(([, item]) => item.revenue / 1_000_000);
   const orderValues = dailyEntries.map(([, item]) => item.orders);
+  const soldProductValues = dailyEntries.map(([, item]) => item.soldProducts);
+  const refundRateValues = dailyEntries.map(([, item]) => (
+    item.issues / Math.max(item.orders + item.issues, 1)
+  ) * 100);
 
   const dashboardKpis: KpiMetric[] = [
     { id: 'revenue', title: 'Doanh thu', value: formatVnd(revenue), change: change(18.5), changeLabel: 'so với tháng trước', icon: 'Wallet', color: 'green', sparklineData: makeSparkline(revenueValues) },
     { id: 'orders', title: 'Đơn hàng', value: formatCompact(orderCount), change: change(15.2), changeLabel: 'so với tháng trước', icon: 'ShoppingBag', color: 'purple', sparklineData: makeSparkline(orderValues) },
     { id: 'aov', title: 'AOV', value: formatVnd(aov), change: change(-7.8), changeLabel: 'so với tháng trước', icon: 'CreditCard', color: 'orange', sparklineData: makeSparkline(revenueValues.map((value, index) => value / Math.max(orderValues[index] ?? 1, 1))) },
-    { id: 'sold-products', title: 'Sản phẩm đã bán', value: formatCompact(soldProducts), change: change(7.8), changeLabel: 'so với tháng trước', icon: 'ArrowUpDown', color: 'blue', sparklineData: makeSparkline(orderValues.map((value) => value * 2)) },
-    { id: 'refund-rate', title: 'Tỷ lệ hoàn hàng', value: formatPercent(refundRate), change: change(2.6), changeLabel: 'so với tháng trước', icon: 'RefreshCcw', color: 'red', sparklineData: makeSparkline(orderValues.map((value, index) => (index % 5) + value / 10)) },
+    { id: 'sold-products', title: 'Sản phẩm đã bán', value: formatCompact(soldProducts), change: change(7.8), changeLabel: 'so với tháng trước', icon: 'ArrowUpDown', color: 'blue', sparklineData: makeSparkline(soldProductValues) },
+    { id: 'refund-rate', title: 'Tỷ lệ hoàn hàng', value: formatPercent(refundRate), change: change(2.6), changeLabel: 'so với tháng trước', icon: 'RefreshCcw', color: 'red', sparklineData: makeSparkline(refundRateValues) },
   ];
 
   const profitKpis: KpiMetric[] = [
@@ -275,9 +300,9 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
     date: new Date(date).toLocaleDateString('vi-VN'),
     doanhThu: formatVnd(item.revenue),
     donHang: formatCompact(item.orders),
-    sanPhamDaBan: formatCompact(item.orders * 2),
+    sanPhamDaBan: formatCompact(item.soldProducts),
     aov: formatVnd(item.revenue / Math.max(item.orders, 1)),
-    tyLeHoan: formatPercent(index % 5 === 0 ? refundRate : Math.max(refundRate - 1.2, 0)),
+    tyLeHoan: formatPercent((item.issues / Math.max(item.orders + item.issues, 1)) * 100),
     soVoiKyTruoc: `${index % 3 === 0 ? '-' : '+'}${(5 + (index % 8)).toFixed(1)}%`,
     soVoiKyTruocType: index % 3 === 0 ? 'down' : 'up',
   }));
