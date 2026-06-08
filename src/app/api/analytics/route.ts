@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const auth = await requireApiSession(request);
   if (auth.response) return auth.response;
 
-  const records = await getActiveRecords();
+  const records = await getActiveRecords(auth.session.sub);
   const filters = parseAnalyticsFilters(new URL(request.url).searchParams);
   const filteredRecords = filterAnalyticsRecords(records, filters);
 

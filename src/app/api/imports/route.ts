@@ -137,7 +137,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const exportJobId = url.searchParams.get('jobId');
   const format = url.searchParams.get('format');
-  const jobs = await getDisplayJobs();
+  const ownerUserId = auth.session.sub;
+  const jobs = await getDisplayJobs(ownerUserId);
 
   if (exportJobId && format === 'csv') {
     const job = jobs.find((item) => item.id === exportJobId);
@@ -146,7 +147,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Không tìm thấy file import.' }, { status: 404 });
     }
 
-    const records = (await getActiveRecords()).filter((record) => record.importJobId === exportJobId);
+    const records = (await getActiveRecords(ownerUserId)).filter((record) => record.importJobId === exportJobId);
     const rawRows = records
       .map((record) => record.raw)
       .filter((row) => Object.keys(row).length > 0 && row.generated !== true);
@@ -197,14 +198,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const [existingJobs, existingRecords] = await Promise.all([getDisplayJobs(), getActiveRecords()]);
+  const ownerUserId = auth.session.sub;
+  result.job.ownerUserId = ownerUserId;
+  result.records = result.records.map((record) => ({ ...record, ownerUserId }));
+
+  const [existingJobs, existingRecords] = await Promise.all([
+    getDisplayJobs(ownerUserId),
+    getActiveRecords(ownerUserId),
+  ]);
   const duplicateError = getDuplicateImportError(result.job, result.records, existingJobs, existingRecords);
 
   if (duplicateError) {
     return NextResponse.json({ error: duplicateError }, { status: 409 });
   }
 
-  await appendImport(result.job, result.records);
+  await appendImport(result.job, result.records, ownerUserId);
 
   return NextResponse.json({
     job: result.job,
@@ -219,9 +227,10 @@ export async function DELETE(request: Request) {
 
   const url = new URL(request.url);
   const jobId = url.searchParams.get('jobId');
+  const ownerUserId = auth.session.sub;
 
   if (jobId) {
-    const deleted = await deleteImport(jobId);
+    const deleted = await deleteImport(jobId, ownerUserId);
 
     if (!deleted) {
       return NextResponse.json({ error: 'Không tìm thấy file import trong dữ liệu runtime.' }, { status: 404 });
@@ -230,6 +239,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  await resetImportedData();
+  await resetImportedData(ownerUserId);
   return NextResponse.json({ ok: true });
 }

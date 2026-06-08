@@ -16,6 +16,7 @@ const recordsFile = path.join(dataDir, 'records.json');
 
 type ImportJobRow = QueryResultRow & {
   id: string;
+  owner_user_id: string | null;
   file_name: string;
   source: ImportSource;
   source_label: string;
@@ -36,6 +37,7 @@ type ImportJobRow = QueryResultRow & {
 type NormalizedRecordRow = QueryResultRow & {
   id: string;
   import_job_id: string;
+  owner_user_id: string | null;
   source: ImportSource;
   channel: string;
   type: NormalizedRecordType;
@@ -71,6 +73,7 @@ function toNumber(value: string | number) {
 function mapImportJob(row: ImportJobRow): ImportJob {
   return {
     id: row.id,
+    ownerUserId: row.owner_user_id ?? undefined,
     fileName: row.file_name,
     source: row.source,
     sourceLabel: row.source_label,
@@ -93,6 +96,7 @@ function mapNormalizedRecord(row: NormalizedRecordRow): NormalizedRecord {
   return {
     id: row.id,
     importJobId: row.import_job_id,
+    ownerUserId: row.owner_user_id ?? undefined,
     source: row.source,
     channel: row.channel,
     type: row.type,
@@ -134,83 +138,111 @@ async function writeJson<T>(filePath: string, value: T) {
   await fs.rename(tmpPath, filePath);
 }
 
-export async function getImportedJobs(): Promise<ImportJob[]> {
+function filterJobsByOwner(jobs: ImportJob[], ownerUserId?: string) {
+  if (!ownerUserId) return jobs;
+  return jobs.filter((job) => job.ownerUserId === ownerUserId);
+}
+
+function filterRecordsByOwner(records: NormalizedRecord[], ownerUserId?: string) {
+  if (!ownerUserId) return records;
+  return records.filter((record) => record.ownerUserId === ownerUserId);
+}
+
+export async function getImportedJobs(ownerUserId?: string): Promise<ImportJob[]> {
   if (isDatabaseEnabled()) {
-    const result = await query<ImportJobRow>('SELECT * FROM import_jobs ORDER BY imported_at DESC');
+    const result = ownerUserId
+      ? await query<ImportJobRow>(
+        'SELECT * FROM import_jobs WHERE owner_user_id = $1 ORDER BY imported_at DESC',
+        [ownerUserId],
+      )
+      : await query<ImportJobRow>('SELECT * FROM import_jobs ORDER BY imported_at DESC');
     return result.rows.map(mapImportJob);
   }
 
-  return readJson<ImportJob[]>(jobsFile, []);
+  return filterJobsByOwner(await readJson<ImportJob[]>(jobsFile, []), ownerUserId);
 }
 
-export async function getImportedRecords(): Promise<NormalizedRecord[]> {
+export async function getImportedRecords(ownerUserId?: string): Promise<NormalizedRecord[]> {
   if (isDatabaseEnabled()) {
-    const result = await query<NormalizedRecordRow>('SELECT * FROM normalized_records ORDER BY date DESC, id ASC');
+    const result = ownerUserId
+      ? await query<NormalizedRecordRow>(
+        'SELECT * FROM normalized_records WHERE owner_user_id = $1 ORDER BY date DESC, id ASC',
+        [ownerUserId],
+      )
+      : await query<NormalizedRecordRow>('SELECT * FROM normalized_records ORDER BY date DESC, id ASC');
     return result.rows.map(mapNormalizedRecord);
   }
 
-  return readJson<NormalizedRecord[]>(recordsFile, []);
+  return filterRecordsByOwner(await readJson<NormalizedRecord[]>(recordsFile, []), ownerUserId);
 }
 
-export async function getDisplayJobs(): Promise<ImportJob[]> {
-  return getImportedJobs();
+export async function getDisplayJobs(ownerUserId?: string): Promise<ImportJob[]> {
+  return getImportedJobs(ownerUserId);
 }
 
-export async function getActiveRecords(): Promise<NormalizedRecord[]> {
-  return getImportedRecords();
+export async function getActiveRecords(ownerUserId?: string): Promise<NormalizedRecord[]> {
+  return getImportedRecords(ownerUserId);
 }
 
-export async function appendImport(job: ImportJob, records: NormalizedRecord[]) {
+export async function appendImport(job: ImportJob, records: NormalizedRecord[], ownerUserId?: string) {
+  const ownedJob: ImportJob = { ...job, ownerUserId: ownerUserId ?? job.ownerUserId };
+  const ownedRecords = records.map((record) => ({
+    ...record,
+    ownerUserId: ownerUserId ?? record.ownerUserId ?? job.ownerUserId,
+  }));
+
   if (isDatabaseEnabled()) {
     await withTransaction(async (tx) => {
       await tx(
         `
           INSERT INTO import_jobs (
-            id, file_name, source, source_label, data_type, file_size, total_rows,
+            id, owner_user_id, file_name, source, source_label, data_type, file_size, total_rows,
             valid_rows, error_rows, status, imported_by, imported_at,
             date_range_from, date_range_to, errors, preview
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7,
-            $8, $9, $10, $11, $12,
-            $13, $14, $15::jsonb, $16::jsonb
+            $1, $2, $3, $4, $5, $6, $7, $8,
+            $9, $10, $11, $12, $13,
+            $14, $15, $16::jsonb, $17::jsonb
           )
         `,
         [
-          job.id,
-          job.fileName,
-          job.source,
-          job.sourceLabel,
-          job.dataType,
-          job.fileSize,
-          job.totalRows,
-          job.validRows,
-          job.errorRows,
-          job.status,
-          job.importedBy,
-          job.importedAt,
-          job.dateRangeFrom ?? null,
-          job.dateRangeTo ?? null,
-          JSON.stringify(job.errors),
-          JSON.stringify(job.preview),
+          ownedJob.id,
+          ownedJob.ownerUserId ?? null,
+          ownedJob.fileName,
+          ownedJob.source,
+          ownedJob.sourceLabel,
+          ownedJob.dataType,
+          ownedJob.fileSize,
+          ownedJob.totalRows,
+          ownedJob.validRows,
+          ownedJob.errorRows,
+          ownedJob.status,
+          ownedJob.importedBy,
+          ownedJob.importedAt,
+          ownedJob.dateRangeFrom ?? null,
+          ownedJob.dateRangeTo ?? null,
+          JSON.stringify(ownedJob.errors),
+          JSON.stringify(ownedJob.preview),
         ],
       );
 
-      for (const record of records) {
+      for (const record of ownedRecords) {
         await tx(
           `
             INSERT INTO normalized_records (
-              id, import_job_id, source, channel, type, date, order_id,
+              id, import_job_id, owner_user_id, source, channel, type, date, order_id,
               product_name, sku, campaign_name, status, quantity, revenue,
               platform_fee, refund_amount, ads_cost, cogs, raw
             ) VALUES (
-              $1, $2, $3, $4, $5, $6, $7,
-              $8, $9, $10, $11, $12, $13,
-              $14, $15, $16, $17, $18::jsonb
+              $1, $2, $3, $4, $5, $6, $7, $8,
+              $9, $10, $11, $12, $13, $14,
+              $15, $16, $17, $18, $19::jsonb
             )
           `,
           [
             record.id,
             record.importJobId,
+            record.ownerUserId ?? ownedJob.ownerUserId ?? null,
             record.source,
             record.channel,
             record.type,
@@ -236,19 +268,21 @@ export async function appendImport(job: ImportJob, records: NormalizedRecord[]) 
 
   const [jobs, existingRecords] = await Promise.all([getImportedJobs(), getImportedRecords()]);
   await Promise.all([
-    writeJson(jobsFile, [job, ...jobs]),
-    writeJson(recordsFile, [...records, ...existingRecords]),
+    writeJson(jobsFile, [ownedJob, ...jobs]),
+    writeJson(recordsFile, [...ownedRecords, ...existingRecords]),
   ]);
 }
 
-export async function deleteImport(jobId: string) {
+export async function deleteImport(jobId: string, ownerUserId?: string) {
   if (isDatabaseEnabled()) {
-    const result = await query('DELETE FROM import_jobs WHERE id = $1', [jobId]);
+    const result = ownerUserId
+      ? await query('DELETE FROM import_jobs WHERE id = $1 AND owner_user_id = $2', [jobId, ownerUserId])
+      : await query('DELETE FROM import_jobs WHERE id = $1', [jobId]);
     return (result.rowCount ?? 0) > 0;
   }
 
   const [jobs, existingRecords] = await Promise.all([getImportedJobs(), getImportedRecords()]);
-  const nextJobs = jobs.filter((job) => job.id !== jobId);
+  const nextJobs = jobs.filter((job) => job.id !== jobId || (ownerUserId && job.ownerUserId !== ownerUserId));
 
   if (nextJobs.length === jobs.length) {
     return false;
@@ -262,9 +296,15 @@ export async function deleteImport(jobId: string) {
   return true;
 }
 
-export async function resetImportedData() {
+export async function resetImportedData(ownerUserId?: string) {
   if (isDatabaseEnabled()) {
     await withTransaction(async (tx) => {
+      if (ownerUserId) {
+        await tx('DELETE FROM normalized_records WHERE owner_user_id = $1', [ownerUserId]);
+        await tx('DELETE FROM import_jobs WHERE owner_user_id = $1', [ownerUserId]);
+        return;
+      }
+
       await tx('DELETE FROM normalized_records');
       await tx('DELETE FROM import_jobs');
     });
@@ -272,6 +312,15 @@ export async function resetImportedData() {
   }
 
   await ensureDataDir();
+  if (ownerUserId) {
+    const [jobs, existingRecords] = await Promise.all([getImportedJobs(), getImportedRecords()]);
+    await Promise.all([
+      writeJson(jobsFile, jobs.filter((job) => job.ownerUserId !== ownerUserId)),
+      writeJson(recordsFile, existingRecords.filter((record) => record.ownerUserId !== ownerUserId)),
+    ]);
+    return;
+  }
+
   await Promise.all([
     writeJson(jobsFile, []),
     writeJson(recordsFile, []),

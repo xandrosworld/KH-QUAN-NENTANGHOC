@@ -41,6 +41,7 @@ const schemaStatements = [
   `
     CREATE TABLE IF NOT EXISTS import_jobs (
       id TEXT PRIMARY KEY,
+      owner_user_id TEXT,
       file_name TEXT NOT NULL,
       source TEXT NOT NULL,
       source_label TEXT NOT NULL,
@@ -58,11 +59,14 @@ const schemaStatements = [
       preview JSONB NOT NULL DEFAULT '[]'::jsonb
     )
   `,
+  `ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS owner_user_id TEXT`,
+  `CREATE INDEX IF NOT EXISTS import_jobs_owner_user_id_idx ON import_jobs (owner_user_id)`,
   `CREATE INDEX IF NOT EXISTS import_jobs_imported_at_idx ON import_jobs (imported_at DESC)`,
   `
     CREATE TABLE IF NOT EXISTS normalized_records (
       id TEXT PRIMARY KEY,
       import_job_id TEXT NOT NULL REFERENCES import_jobs(id) ON DELETE CASCADE,
+      owner_user_id TEXT,
       source TEXT NOT NULL,
       channel TEXT NOT NULL,
       type TEXT NOT NULL,
@@ -81,9 +85,39 @@ const schemaStatements = [
       raw JSONB NOT NULL DEFAULT '{}'::jsonb
     )
   `,
+  `ALTER TABLE normalized_records ADD COLUMN IF NOT EXISTS owner_user_id TEXT`,
   `CREATE INDEX IF NOT EXISTS normalized_records_job_idx ON normalized_records (import_job_id)`,
+  `CREATE INDEX IF NOT EXISTS normalized_records_owner_user_id_idx ON normalized_records (owner_user_id)`,
   `CREATE INDEX IF NOT EXISTS normalized_records_date_idx ON normalized_records (date)`,
   `CREATE INDEX IF NOT EXISTS normalized_records_source_idx ON normalized_records (source)`,
+  `
+    UPDATE import_jobs AS job
+    SET owner_user_id = (
+      SELECT users.id
+      FROM users
+      WHERE LOWER(TRIM(job.imported_by)) = LOWER(TRIM(users.email))
+         OR LOWER(TRIM(job.imported_by)) = LOWER(TRIM(users.name))
+      ORDER BY
+        CASE WHEN LOWER(TRIM(job.imported_by)) = LOWER(TRIM(users.email)) THEN 0 ELSE 1 END,
+        users.created_at ASC
+      LIMIT 1
+    )
+    WHERE job.owner_user_id IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM users
+        WHERE LOWER(TRIM(job.imported_by)) = LOWER(TRIM(users.email))
+           OR LOWER(TRIM(job.imported_by)) = LOWER(TRIM(users.name))
+      )
+  `,
+  `
+    UPDATE normalized_records AS record
+    SET owner_user_id = job.owner_user_id
+    FROM import_jobs AS job
+    WHERE record.import_job_id = job.id
+      AND record.owner_user_id IS NULL
+      AND job.owner_user_id IS NOT NULL
+  `,
 ];
 
 export function isDatabaseEnabled() {

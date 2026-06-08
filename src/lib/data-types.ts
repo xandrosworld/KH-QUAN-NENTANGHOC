@@ -21,6 +21,7 @@ export type NormalizedOrderStatus = 'success' | 'cancelled' | 'refunded' | 'unkn
 export interface NormalizedRecord {
   id: string;
   importJobId: string;
+  ownerUserId?: string;
   source: ImportSource;
   channel: string;
   type: NormalizedRecordType;
@@ -41,6 +42,7 @@ export interface NormalizedRecord {
 
 export interface ImportJob {
   id: string;
+  ownerUserId?: string;
   fileName: string;
   source: ImportSource;
   sourceLabel: string;

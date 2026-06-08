@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const message = String(body.message ?? '').trim().toLowerCase();
-  const analytics = buildAnalytics(await getActiveRecords());
+  const analytics = buildAnalytics(await getActiveRecords(auth.session.sub));
   const { totals } = analytics;
 
   if (!message) {
