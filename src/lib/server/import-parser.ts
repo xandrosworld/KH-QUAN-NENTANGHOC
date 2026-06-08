@@ -19,6 +19,12 @@ const sourceDataTypes: Record<ImportSource, string> = {
   giavon: 'Giá vốn sản phẩm',
 };
 
+type DetectedImportFile = {
+  source: ImportSource;
+  label: string;
+  confidence: number;
+};
+
 const headerMarkers = [
   'ma don hang',
   'order id',
@@ -592,6 +598,72 @@ function postProcessRecords(records: NormalizedRecord[], source: ImportSource) {
   return records;
 }
 
+function getHeaderText(rows: Record<string, unknown>[]) {
+  return normalizeHeader(rows.slice(0, 3).flatMap((row) => Object.keys(row)).join(' '));
+}
+
+function detectImportFile(fileName: string, rows: Record<string, unknown>[]): DetectedImportFile | null {
+  const fileText = normalizeHeader(fileName);
+  const headerText = getHeaderText(rows);
+  const text = `${fileText} ${headerText}`;
+
+  if (
+    text.includes('ten dich vu hien thi') ||
+    text.includes('du lieu dich vu hien thi shopee') ||
+    (text.includes('doanh so') && text.includes('roas') && text.includes('chi phi'))
+  ) {
+    return { source: 'ads', label: 'file Ads Shopee', confidence: 10 };
+  }
+
+  if (
+    text.includes('livestream data') ||
+    text.includes('ten phien live') ||
+    (text.includes('so luot xem phien live') && text.includes('chi phi'))
+  ) {
+    return { source: 'ads', label: 'file Ads Live TikTok', confidence: 10 };
+  }
+
+  if (
+    text.includes('campaign overview data') ||
+    (text.includes('theo ngay') && text.includes('chi phi') && text.includes('roi cua hang hien tai'))
+  ) {
+    return { source: 'ads', label: 'file Ads TikTok', confidence: 10 };
+  }
+
+  if (
+    text.includes('return order id') ||
+    (text.includes('order id') && text.includes('order status') && text.includes('seller sku') && text.includes('sku subtotal'))
+  ) {
+    return { source: 'tiktok', label: 'file đơn hàng TikTok Shop', confidence: 10 };
+  }
+
+  if (
+    text.includes('ma don hang') &&
+    text.includes('trang thai don hang') &&
+    (text.includes('tong gia tri don hang') || text.includes('gia uu dai'))
+  ) {
+    return { source: 'shopee', label: 'file đơn hàng Shopee', confidence: 10 };
+  }
+
+  if (
+    text.includes('gia von') ||
+    (text.includes('cogs') && (text.includes('sku') || text.includes('product name')))
+  ) {
+    return { source: 'giavon', label: 'file giá vốn', confidence: 8 };
+  }
+
+  return null;
+}
+
+function validateSelectedSource(fileName: string, selectedSource: ImportSource, rows: Record<string, unknown>[]) {
+  const detected = detectImportFile(fileName, rows);
+  if (!detected || detected.confidence < 8 || detected.source === selectedSource) return;
+
+  throw new Error(
+    `File này có vẻ là ${detected.label}. Vui lòng chọn nguồn "${sourceLabels[detected.source]}" rồi import lại.`,
+  );
+}
+
 function getDateRange(records: NormalizedRecord[]) {
   const dates = records.map((record) => record.date).filter(Boolean).sort();
   return {
@@ -603,6 +675,7 @@ function getDateRange(records: NormalizedRecord[]) {
 export async function parseImportFile(file: File, source: ImportSource, importedBy = 'Tài khoản'): Promise<ImportResult> {
   const jobId = randomUUID();
   const rows = await readRows(file);
+  validateSelectedSource(file.name, source, rows);
   const errors: string[] = [];
   const records = postProcessRecords(
     rows

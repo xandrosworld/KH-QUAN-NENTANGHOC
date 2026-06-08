@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { ImportSource } from '@/lib/data-types';
+import type { ImportJob, ImportSource, NormalizedRecord } from '@/lib/data-types';
 import { buildImportList } from '@/lib/server/analytics';
 import {
   appendImport,
@@ -58,6 +58,76 @@ function safeExportName(fileName: string) {
   const withoutExt = fileName.replace(/\.[^.]+$/, '');
   const safe = withoutExt.replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '');
   return `${safe || 'tronx-import-data'}.csv`;
+}
+
+function normalizeIdentity(value?: string) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd')
+    .replace(/\u0110/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getComparableRecordKey(record: NormalizedRecord) {
+  if (record.type === 'order' && record.orderId) {
+    const lineIdentity = normalizeIdentity(record.sku || record.productName || '');
+    return [
+      'order',
+      record.source,
+      record.status,
+      normalizeIdentity(record.orderId),
+      lineIdentity,
+    ].join('|');
+  }
+
+  if (record.type === 'ads') {
+    return [
+      'ads',
+      record.channel,
+      record.date,
+      normalizeIdentity(record.campaignName || ''),
+      Math.round(record.adsCost),
+      Math.round(record.revenue),
+    ].join('|');
+  }
+
+  if (record.type === 'cogs') {
+    return [
+      'cogs',
+      normalizeIdentity(record.sku || record.productName || ''),
+      Math.round(record.cogs),
+    ].join('|');
+  }
+
+  return null;
+}
+
+function getDuplicateImportError(
+  job: ImportJob,
+  incomingRecords: NormalizedRecord[],
+  existingJobs: ImportJob[],
+  existingRecords: NormalizedRecord[],
+) {
+  const sameFile = existingJobs.find((item) => normalizeIdentity(item.fileName) === normalizeIdentity(job.fileName));
+  if (sameFile) {
+    return `File "${job.fileName}" đã được import trước đó. Hãy xóa job import cũ rồi import lại nếu muốn thay dữ liệu.`;
+  }
+
+  const existingKeys = new Set(existingRecords.map(getComparableRecordKey).filter(Boolean));
+  const incomingKeys = incomingRecords.map(getComparableRecordKey).filter(Boolean);
+  if (incomingKeys.length === 0) return null;
+
+  const duplicateCount = incomingKeys.filter((key) => existingKeys.has(key)).length;
+  const duplicateRate = duplicateCount / incomingKeys.length;
+
+  if (duplicateCount === incomingKeys.length || (incomingKeys.length >= 20 && duplicateRate >= 0.2)) {
+    return `Phát hiện ${duplicateCount}/${incomingKeys.length} dòng trùng với dữ liệu đã import. Có thể bạn đang import trùng file, import cả Order.all và Order.completed, hoặc nhập thêm file trạng thái đã nằm trong file trước đó. Hãy xóa dữ liệu trùng, hoặc chỉ chọn một file tổng hợp để import.`;
+  }
+
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -125,6 +195,13 @@ export async function POST(request: Request) {
       { error: (error as Error).message || 'Không đọc được file import.' },
       { status: 400 },
     );
+  }
+
+  const [existingJobs, existingRecords] = await Promise.all([getDisplayJobs(), getActiveRecords()]);
+  const duplicateError = getDuplicateImportError(result.job, result.records, existingJobs, existingRecords);
+
+  if (duplicateError) {
+    return NextResponse.json({ error: duplicateError }, { status: 409 });
   }
 
   await appendImport(result.job, result.records);
