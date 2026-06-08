@@ -39,9 +39,15 @@ export default function SvgLineChart({ data, series, viewBoxWidth = 620 }: SvgLi
   const yMax = rawMax + paddingValue;
   const tickCount = 5;
   const yTicks = Array.from({ length: tickCount }, (_, index) => yMin + ((yMax - yMin) * index) / (tickCount - 1));
-  const xTickIndexes = data
-    .map((_, index) => index)
-    .filter((index) => data.length <= 8 || index === 0 || index === data.length - 1 || index % 2 === 0);
+  const targetLabelWidth = 56;
+  const maxVisibleLabels = Math.max(2, Math.floor(chartWidth / targetLabelWidth));
+  const showAllLabels = data.length <= maxVisibleLabels;
+  const step = showAllLabels ? 1 : Math.ceil((data.length - 1) / Math.max(maxVisibleLabels - 1, 1));
+  const xTickIndexes = showAllLabels
+    ? data.map((_, index) => index)
+    : data
+      .map((_, index) => index)
+      .filter((index) => index === 0 || index === data.length - 1 || index % step === 0);
 
   const getX = (index: number) => padding.left + (chartWidth * index) / Math.max(data.length - 1, 1);
   const getY = (value: number) => {
@@ -92,7 +98,8 @@ export default function SvgLineChart({ data, series, viewBoxWidth = 620 }: SvgLi
           y={height - 10}
           textAnchor="middle"
           fill="#94a3b8"
-          fontSize="12"
+          fontSize="11"
+          fontWeight="500"
         >
           {data[index].date}
         </text>
