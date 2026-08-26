@@ -418,7 +418,12 @@ function normalizeShopeeOrderRow(row: Record<string, unknown>, jobId: string): N
     date,
     orderId,
     productName: firstNonEmpty(getValue(row, ['ten san pham']), 'Sản phẩm chưa đặt tên'),
-    sku: firstNonEmpty(getValue(row, ['sku phan loai hang']), getValue(row, ['sku san pham'])),
+    sku: firstNonEmpty(
+      getValue(row, ['sku phan loai hang']),
+      getValue(row, ['sku san pham']),
+      getValue(row, ['ten phan loai hang']),
+      getValue(row, ['ten san pham']),
+    ),
     status,
     quantity,
     revenue: lineRevenue,
