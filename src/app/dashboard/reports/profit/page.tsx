@@ -31,6 +31,15 @@ export default function ProfitReportPage() {
   const costs = analytics.costStructure;
   const profits = analytics.channelProfits;
   const detailRows = analytics.profitDetailRows;
+  const cogsAvailable = analytics.dataQuality.cogsAvailable;
+  const resolvedProfitColumns = profitColumns.map((column) => {
+    if (cogsAvailable) return column;
+    if (column.key === 'giaVon') return { ...column, label: 'Giá vốn (chưa có)' };
+    if (column.key === 'loiNhuanGop') return { ...column, label: 'LN trước giá vốn' };
+    if (column.key === 'netProfit') return { ...column, label: 'LN trước giá vốn' };
+    if (column.key === 'tySuatLN') return { ...column, label: 'Biên trước giá vốn' };
+    return column;
+  });
   const costRadius = 64;
   const costCircumference = 2 * Math.PI * costRadius;
   const maxChannelProfit = Math.max(...profits.map((channel) => channel.value), 1);
@@ -66,6 +75,15 @@ export default function ProfitReportPage() {
           onChange={setFilters}
         />
 
+        {!analytics.dataQuality.cogsAvailable && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+            <p className="font-semibold">Chưa có dữ liệu giá vốn theo SKU</p>
+            <p className="mt-1">
+              Hệ thống đang hiển thị lợi nhuận trước giá vốn: doanh thu trừ hoàn tiền, phí sàn và chi phí quảng cáo. Net Profit đầy đủ sẽ được tính tự động khi có file giá vốn.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {kpis.map((kpi) => (
             <MetricCard key={kpi.id} {...kpi} />
@@ -85,7 +103,7 @@ export default function ProfitReportPage() {
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                Net Profit
+                {cogsAvailable ? 'Net Profit' : 'Lợi nhuận trước giá vốn'}
               </span>
             </div>
             <div className="h-64">
@@ -172,7 +190,7 @@ export default function ProfitReportPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  {profitColumns.map((col) => (
+                  {resolvedProfitColumns.map((col) => (
                     <th key={col.key} className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       {col.label}
                     </th>
@@ -212,7 +230,9 @@ export default function ProfitReportPage() {
                 Công thức lợi nhuận đang áp dụng
               </h3>
               <p className="text-sm text-blue-700">
-                Net Profit = Doanh thu - Giá vốn (COGS) - Chi phí Ads - Phí sàn - Vận chuyển - Chi phí khác
+                {cogsAvailable
+                  ? 'Net Profit = Doanh thu - Giá vốn (COGS) - Chi phí Ads - Phí sàn - Vận chuyển - Chi phí khác'
+                  : 'Lợi nhuận trước giá vốn = Doanh thu - Chi phí Ads - Phí sàn - Hoàn tiền. Chưa thể tính Net Profit khi thiếu giá vốn.'}
               </p>
               <a href="/dashboard/settings/kpi" className="inline-block mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium underline">
                 Xem công thức trong Cài đặt →

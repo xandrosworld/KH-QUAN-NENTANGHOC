@@ -1,3 +1,3 @@
-Ma don,Ngay,Ten san pham,SKU,So luong,Doanh thu,Phi san,Trang thai
-SPX001,01/06/2026,Ao thun nam cotton,AT-COTTON,2,350000,22750,Thanh cong
-SPX002,02/06/2026,Quan short nam,QS-NAM,1,245000,15925,Hoan hang
+Mã đơn hàng,Ngày đặt hàng,Trạng Thái Đơn Hàng,Tên sản phẩm,SKU sản phẩm,SKU phân loại hàng,Số lượng,Giá ưu đãi,Phí cố định,Phí Dịch Vụ,Phí xử lý giao dịch,Trạng thái Trả hàng/Hoàn tiền,Số lượng sản phẩm được hoàn trả
+SPX001,01/06/2026,Hoàn thành,Áo thun nam cotton,AT-COTTON,AT-COTTON-DEN-L,2,175000,15000,5000,3000,,0
+SPX002,02/06/2026,Đã hủy,Quần short nam,QS-NAM,QS-NAM-DEN-M,1,245000,0,0,0,,0

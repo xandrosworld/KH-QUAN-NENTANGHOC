@@ -44,3 +44,4 @@ next-env.d.ts
 # local runtime demo data
 /.runtime-data/
 /.codex-runtime-logs/
+/data/

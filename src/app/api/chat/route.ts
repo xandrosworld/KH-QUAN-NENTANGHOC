@@ -31,6 +31,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ answer: 'Bạn muốn xem chỉ số nào: doanh thu, net profit, ROAS, top sản phẩm hay top campaign?' });
   }
 
+  if (
+    !analytics.dataQuality.cogsAvailable &&
+    (message.includes('lợi nhuận') || message.includes('lãi') || message.includes('profit'))
+  ) {
+    return NextResponse.json({
+      answer: `Khách hàng chưa cung cấp giá vốn theo SKU nên chưa thể tính Net Profit chính xác. Lợi nhuận trước giá vốn hiện tại là ${formatVnd(totals.netProfit)}; chỉ số này đã trừ chi phí Ads, phí sàn và hoàn tiền.`,
+      analytics: { totals, dataQuality: analytics.dataQuality },
+    });
+  }
+
   if (hasGeminiConfig()) {
     try {
       const result = await askGeminiWithAnalytics(String(body.message ?? '').trim(), analytics);

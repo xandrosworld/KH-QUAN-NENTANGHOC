@@ -12,6 +12,7 @@ export default function ProductsReportPage() {
   const products = analytics.topProducts;
   const totalRevenue = analytics.totals.revenue;
   const soldProducts = analytics.totals.soldProducts;
+  const cogsAvailable = analytics.dataQuality.cogsAvailable;
 
   return (
     <div className="space-y-6">
@@ -62,7 +63,7 @@ export default function ProductsReportPage() {
 
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-950">Top sản phẩm theo lợi nhuận</h2>
+          <h2 className="text-base font-semibold text-gray-950">Top sản phẩm {cogsAvailable ? 'theo lợi nhuận' : 'trước giá vốn'}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -71,8 +72,8 @@ export default function ProductsReportPage() {
                 <th className="px-4 py-3 text-left">#</th>
                 <th className="px-4 py-3 text-left">Sản phẩm</th>
                 <th className="px-4 py-3 text-right">Doanh thu</th>
-                <th className="px-4 py-3 text-right">Lợi nhuận</th>
-                <th className="px-4 py-3 text-right">Net Profit</th>
+                <th className="px-4 py-3 text-right">{cogsAvailable ? 'Lợi nhuận' : 'Lãi trước giá vốn'}</th>
+                <th className="px-4 py-3 text-right">{cogsAvailable ? 'Net Profit' : 'Biên trước giá vốn'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

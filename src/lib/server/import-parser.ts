@@ -287,9 +287,9 @@ function sumNumbers(row: Record<string, unknown>, candidates: string[]) {
   return candidates.reduce((sum, candidate) => sum + Math.abs(toNumber(getValue(row, [candidate]))), 0);
 }
 
-function parseDate(value: unknown) {
+function parseDate(value: unknown): string | undefined {
   const raw = toStringValue(value);
-  if (!raw) return new Date().toISOString().slice(0, 10);
+  if (!raw || raw === '-') return undefined;
 
   const isoMatch = raw.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
   if (isoMatch) {
@@ -309,15 +309,16 @@ function parseDate(value: unknown) {
   const directDate = new Date(raw);
   if (!Number.isNaN(directDate.getTime())) return directDate.toISOString().slice(0, 10);
 
-  return new Date().toISOString().slice(0, 10);
+  return undefined;
 }
 
 function parseStatus(...values: unknown[]): NormalizedOrderStatus {
   const normalized = normalizeHeader(values.map(toStringValue).filter(Boolean).join(' '));
-  if (!normalized) return 'success';
+  if (!normalized) return 'unknown';
+  if (/(da nhan duoc hang|xac nhan da nhan|received)/.test(normalized)) return 'success';
   if (/(tra hang|hoan tien|refund|return|chap thuan yeu cau|yeu cau cho xu ly)/.test(normalized)) return 'refunded';
   if (/(huy|cancel|canceled|cancelled)/.test(normalized)) return 'cancelled';
-  if (/(hoan thanh|da hoan tat|thanh cong|completed|delivered|da giao|success)/.test(normalized)) return 'success';
+  if (/(hoan thanh|da hoan tat|thanh cong|completed|delivered|da giao|da nhan duoc hang|xac nhan da nhan|received|success)/.test(normalized)) return 'success';
   return 'unknown';
 }
 
@@ -327,6 +328,14 @@ function firstNonEmpty(...values: unknown[]) {
     if (stringValue) return stringValue;
   }
   return '';
+}
+
+function firstValidDate(...values: unknown[]) {
+  for (const value of values) {
+    const date = parseDate(value);
+    if (date) return date;
+  }
+  return undefined;
 }
 
 function isRowEmpty(row: Record<string, unknown>) {
@@ -343,13 +352,42 @@ function isHelperRow(row: Record<string, unknown>) {
   );
 }
 
+const sensitiveHeaderPatterns = [
+  /nguoi mua/,
+  /buyer username/,
+  /ten nguoi nhan/,
+  /recipient/,
+  /so dien thoai/,
+  /phone/,
+  /dia chi/,
+  /address/,
+  /tinh thanh pho/,
+  /tp quan huyen/,
+  /^quan$/,
+  /^quoc gia$/,
+  /^country$/,
+  /^state$/,
+  /^city$/,
+  /zipcode/,
+  /postal code/,
+];
+
+function sanitizeRawRow(row: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([key]) => {
+      const normalizedKey = normalizeHeader(key);
+      return !sensitiveHeaderPatterns.some((pattern) => pattern.test(normalizedKey));
+    }),
+  );
+}
+
 function baseRecord(jobId: string, source: ImportSource, row: Record<string, unknown>) {
   return {
     id: randomUUID(),
     importJobId: jobId,
     source,
     channel: sourceLabels[source],
-    raw: row,
+    raw: sanitizeRawRow(row),
   };
 }
 
@@ -358,9 +396,17 @@ function normalizeShopeeOrderRow(row: Record<string, unknown>, jobId: string): N
 
   const returnStatus = getValue(row, ['trang thai tra hang hoan tien']);
   const returnedQuantity = toNumber(getValue(row, ['so luong san pham duoc hoan tra']));
-  const status = returnStatus || returnedQuantity > 0
-    ? 'refunded'
-    : parseStatus(getValue(row, ['trang thai don hang']));
+  const hasRefund = parseStatus(returnStatus) === 'refunded' || returnedQuantity > 0;
+  const orderStatus = parseStatus(getValue(row, ['trang thai don hang']));
+  const status = orderStatus === 'success' ? 'success' : hasRefund ? 'refunded' : orderStatus;
+  const date = firstValidDate(
+    getValue(row, ['thoi gian hoan thanh don hang']),
+    getValue(row, ['thoi gian don hang duoc thanh toan']),
+    getValue(row, ['ngay dat hang']),
+  );
+  const orderId = firstNonEmpty(getValue(row, ['ma don hang']));
+  if (!orderId) throw new Error('Thieu ma don hang.');
+  if (!date) throw new Error('Ngay don hang khong hop le.');
   const quantity = Math.max(1, getNumber(row, ['so luong', 'quantity', 'qty']));
   const lineRevenue = getNumber(row, ['tong so tien nguoi mua thanh toan']) || (getNumber(row, ['gia uu dai']) * quantity);
   const platformFee = sumNumbers(row, ['phi co dinh', 'phi dich vu', 'phi xu ly giao dich']);
@@ -369,19 +415,15 @@ function normalizeShopeeOrderRow(row: Record<string, unknown>, jobId: string): N
     ...baseRecord(jobId, 'shopee', row),
     channel: 'Shopee',
     type: 'order',
-    date: parseDate(firstNonEmpty(
-      getValue(row, ['thoi gian hoan thanh don hang']),
-      getValue(row, ['thoi gian don hang duoc thanh toan']),
-      getValue(row, ['ngay dat hang']),
-    )),
-    orderId: firstNonEmpty(getValue(row, ['ma don hang']), randomUUID().slice(0, 8)),
+    date,
+    orderId,
     productName: firstNonEmpty(getValue(row, ['ten san pham']), 'Sản phẩm chưa đặt tên'),
     sku: firstNonEmpty(getValue(row, ['sku phan loai hang']), getValue(row, ['sku san pham'])),
     status,
     quantity,
     revenue: lineRevenue,
     platformFee,
-    refundAmount: status === 'cancelled' || status === 'refunded' ? lineRevenue : 0,
+    refundAmount: hasRefund ? lineRevenue : 0,
     adsCost: 0,
     cogs: 0,
   };
@@ -411,7 +453,7 @@ function distributeShopeeOrderAmounts(records: NormalizedRecord[]) {
       const weight = lineTotal > 0 ? Math.max(record.revenue, 0) / lineTotal : 1 / group.length;
       if (orderRevenue > 0) record.revenue = orderRevenue * weight;
       record.platformFee = orderFee * weight;
-      if (record.status === 'cancelled' || record.status === 'refunded') record.refundAmount = record.revenue;
+      if (record.refundAmount > 0 || record.status === 'refunded') record.refundAmount = record.revenue;
     });
   });
 
@@ -427,18 +469,23 @@ function normalizeTikTokReturnRow(row: Record<string, unknown>, jobId: string): 
     (getNumber(row, ['return unit price']) * quantity) ||
     getNumber(row, ['order amount'])
   );
+  const date = firstValidDate(getValue(row, ['refund time']), getValue(row, ['time requested']), getValue(row, ['created time']));
+  const orderId = firstNonEmpty(getValue(row, ['order id']), getValue(row, ['return order id']));
+  if (!orderId) throw new Error('Thieu ma don hang hoan tien.');
+  if (!date) throw new Error('Ngay hoan tien khong hop le.');
+  if (refundAmount <= 0) throw new Error('So tien hoan phai lon hon 0.');
 
   return {
     ...baseRecord(jobId, 'tiktok', row),
     channel: 'TikTok Shop',
     type: 'order',
-    date: parseDate(firstNonEmpty(getValue(row, ['refund time']), getValue(row, ['time requested']), getValue(row, ['created time']))),
-    orderId: firstNonEmpty(getValue(row, ['order id']), getValue(row, ['return order id']), randomUUID().slice(0, 8)),
+    date,
+    orderId,
     productName: firstNonEmpty(getValue(row, ['product name']), getValue(row, ['sku name']), 'Sản phẩm chưa đặt tên'),
     sku: firstNonEmpty(getValue(row, ['seller sku']), getValue(row, ['sku id'])),
     status: 'refunded',
     quantity,
-    revenue: refundAmount,
+    revenue: 0,
     platformFee: 0,
     refundAmount,
     adsCost: 0,
@@ -450,14 +497,19 @@ function normalizeTikTokOrderRow(row: Record<string, unknown>, jobId: string): N
   if (isRowEmpty(row)) return null;
   if (getValue(row, ['return order id'])) return normalizeTikTokReturnRow(row, jobId);
 
-  const refundAmount = getNumber(row, ['order refund amount']);
-  const status = refundAmount > 0
-    ? 'refunded'
-    : parseStatus(
-      getValue(row, ['order status']),
-      getValue(row, ['order substatus']),
-      getValue(row, ['cancelation return type']),
-    );
+  const orderStatus = parseStatus(getValue(row, ['order status']), getValue(row, ['order substatus']));
+  const eventStatus = parseStatus(getValue(row, ['cancelation return type']));
+  const status = orderStatus === 'success' ? 'success' : eventStatus !== 'unknown' ? eventStatus : orderStatus;
+  const refundAmount = eventStatus === 'refunded' ? getNumber(row, ['order refund amount']) : 0;
+  const date = firstValidDate(
+    getValue(row, ['delivered time']),
+    getValue(row, ['paid time']),
+    getValue(row, ['shipped time']),
+    getValue(row, ['created time']),
+  );
+  const orderId = firstNonEmpty(getValue(row, ['order id']));
+  if (!orderId) throw new Error('Thieu Order ID.');
+  if (!date) throw new Error('Ngay don hang khong hop le.');
   const quantity = Math.max(1, getNumber(row, ['quantity', 'sku quantity']));
   const revenue = (
     getNumber(row, ['sku subtotal after discount']) ||
@@ -469,20 +521,15 @@ function normalizeTikTokOrderRow(row: Record<string, unknown>, jobId: string): N
     ...baseRecord(jobId, 'tiktok', row),
     channel: 'TikTok Shop',
     type: 'order',
-    date: parseDate(firstNonEmpty(
-      getValue(row, ['delivered time']),
-      getValue(row, ['paid time']),
-      getValue(row, ['shipped time']),
-      getValue(row, ['created time']),
-    )),
-    orderId: firstNonEmpty(getValue(row, ['order id']), randomUUID().slice(0, 8)),
+    date,
+    orderId,
     productName: firstNonEmpty(getValue(row, ['product name']), getValue(row, ['sku name']), 'Sản phẩm chưa đặt tên'),
     sku: firstNonEmpty(getValue(row, ['seller sku']), getValue(row, ['sku id'])),
     status,
     quantity,
     revenue,
     platformFee: 0,
-    refundAmount: refundAmount || (status === 'cancelled' || status === 'refunded' ? revenue : 0),
+    refundAmount,
     adsCost: 0,
     cogs: 0,
   };
@@ -492,6 +539,10 @@ function normalizeGenericOrderRow(row: Record<string, unknown>, source: ImportSo
   if (isRowEmpty(row)) return null;
 
   const status = parseStatus(getValue(row, ['trang thai', 'status', 'order status', 'tinh trang']));
+  const date = parseDate(getValue(row, ['ngay', 'date', 'created', 'thoi gian', 'time']));
+  const orderId = firstNonEmpty(getValue(row, ['ma don', 'order id', 'id don hang', 'order no']));
+  if (!orderId) throw new Error('Thieu ma don hang.');
+  if (!date) throw new Error('Ngay don hang khong hop le.');
   const quantity = Math.max(1, getNumber(row, ['so luong', 'quantity', 'qty', 'sl', 'so san pham']));
   const revenue = getNumber(row, [
     'doanh thu',
@@ -508,15 +559,15 @@ function normalizeGenericOrderRow(row: Record<string, unknown>, source: ImportSo
   return {
     ...baseRecord(jobId, source, row),
     type: 'order',
-    date: parseDate(getValue(row, ['ngay', 'date', 'created', 'thoi gian', 'time'])),
-    orderId: firstNonEmpty(getValue(row, ['ma don', 'order id', 'id don hang', 'order no']), randomUUID().slice(0, 8)),
+    date,
+    orderId,
     productName: firstNonEmpty(getValue(row, ['ten san pham', 'product name', 'item name', 'sku name']), 'Sản phẩm chưa đặt tên'),
     sku: firstNonEmpty(getValue(row, ['seller sku', 'sku', 'ma hang', 'variation'])),
     status,
     quantity,
     revenue,
     platformFee: getNumber(row, ['phi san', 'commission', 'transaction fee', 'platform fee', 'service fee']),
-    refundAmount: refundAmount || (status === 'cancelled' || status === 'refunded' ? revenue : 0),
+    refundAmount: status === 'refunded' ? (refundAmount || revenue) : 0,
     adsCost: 0,
     cogs: getNumber(row, ['gia von', 'cogs', 'cost']),
   };
@@ -530,9 +581,29 @@ function inferAdsChannel(row: Record<string, unknown>, fileName: string) {
   const normalizedRow = normalizeHeader(Object.values(row).slice(0, 8).map(toStringValue).join(' '));
 
   if (normalizedFile.includes('shopee') || normalizedRow.includes('shopee')) return 'Shopee Ads';
+  if (normalizedFile.includes('campaign overview')) return 'TikTok Ads - Tong hop';
   if (normalizedFile.includes('live') || normalizedRow.includes('live')) return 'TikTok Live';
   if (normalizedFile.includes('tiktok') || normalizedRow.includes('tiktok')) return 'TikTok Ads';
   return 'Ads';
+}
+
+function getReportDateFromFileName(fileName: string) {
+  const match = fileName.match(/(?:^|\D)(\d{2})[_-](\d{2})[_-](\d{4})(?:\D|$)/);
+  if (!match) return undefined;
+  return parseDate(`${match[3]}-${match[2]}-${match[1]}`);
+}
+
+function getAdsDate(row: Record<string, unknown>, fileName: string) {
+  if (getValue(row, ['ten dich vu hien thi'])) {
+    return getReportDateFromFileName(fileName) ?? parseDate(getValue(row, ['ngay bat dau'])) ?? '';
+  }
+
+  return firstValidDate(
+    getValue(row, ['theo ngay']),
+    getValue(row, ['thoi gian ra mat']),
+    getValue(row, ['ngay bat dau']),
+    getValue(row, ['ngay', 'date', 'day']),
+  ) ?? '';
 }
 
 function normalizeAdsRow(row: Record<string, unknown>, jobId: string, fileName: string): NormalizedRecord | null {
@@ -547,12 +618,14 @@ function normalizeAdsRow(row: Record<string, unknown>, jobId: string, fileName: 
     getValue(row, ['id chien dich']),
     'Campaign chưa đặt tên',
   );
+  const date = getAdsDate(row, fileName);
+  if (!date) throw new Error('Ngay bao cao khong hop le.');
 
   return {
     ...baseRecord(jobId, 'ads', row),
     channel: inferAdsChannel(row, fileName),
     type: 'ads',
-    date: parseDate(firstNonEmpty(getValue(row, ['theo ngay']), getValue(row, ['thoi gian ra mat']), getValue(row, ['ngay bat dau']), getValue(row, ['ngay', 'date', 'day']))),
+    date,
     campaignName,
     status: 'success',
     quantity: 0,
@@ -569,12 +642,13 @@ function normalizeCogsRow(row: Record<string, unknown>, jobId: string): Normaliz
   const productName = firstNonEmpty(getValue(row, ['ten san pham', 'product name', 'item name']), 'Sản phẩm chưa đặt tên');
   const sku = firstNonEmpty(getValue(row, ['seller sku', 'sku', 'ma hang']), productName);
   const cogs = getNumber(row, ['gia von', 'cogs', 'cost', 'unit cost']);
+  if (cogs <= 0) throw new Error('Gia von phai lon hon 0.');
 
   return {
     ...baseRecord(jobId, 'giavon', row),
     channel: 'Giá vốn',
     type: 'cogs',
-    date: parseDate(getValue(row, ['ngay', 'date', 'thoi gian'])),
+    date: parseDate(getValue(row, ['ngay', 'date', 'thoi gian'])) ?? '1970-01-01',
     productName,
     sku,
     status: 'success',
@@ -664,6 +738,28 @@ function validateSelectedSource(fileName: string, selectedSource: ImportSource, 
   );
 }
 
+function validateRequiredHeaders(selectedSource: ImportSource, rows: Record<string, unknown>[]) {
+  const headerText = getHeaderText(rows);
+  const hasAny = (...headers: string[]) => headers.some((header) => headerText.includes(normalizeHeader(header)));
+  let valid = false;
+
+  if (selectedSource === 'shopee') {
+    valid = hasAny('ma don hang') && hasAny('trang thai don hang') && hasAny('tong gia tri don hang', 'tong so tien nguoi mua thanh toan', 'gia uu dai');
+  } else if (selectedSource === 'tiktok') {
+    valid = hasAny('order id', 'return order id') && hasAny('order status') && hasAny('order amount', 'sku subtotal after discount', 'order refund amount');
+  } else if (selectedSource === 'ads') {
+    valid = hasAny('chi phi', 'cost', 'spend') && hasAny('theo ngay', 'thoi gian ra mat', 'ngay bat dau', 'ngay', 'date');
+  } else if (selectedSource === 'giavon') {
+    valid = hasAny('sku', 'ma hang', 'product name', 'ten san pham') && hasAny('gia von', 'cogs', 'unit cost');
+  } else {
+    valid = hasAny('order id', 'ma don') && hasAny('date', 'ngay', 'created');
+  }
+
+  if (!valid) {
+    throw new Error('File thieu cot bat buoc hoac khong dung mau cua nguon da chon. Du lieu chua duoc ghi vao he thong.');
+  }
+}
+
 function getDateRange(records: NormalizedRecord[]) {
   const dates = records.map((record) => record.date).filter(Boolean).sort();
   return {
@@ -676,6 +772,7 @@ export async function parseImportFile(file: File, source: ImportSource, imported
   const jobId = randomUUID();
   const rows = await readRows(file);
   validateSelectedSource(file.name, source, rows);
+  validateRequiredHeaders(source, rows);
   const errors: string[] = [];
   const records = postProcessRecords(
     rows
@@ -689,7 +786,7 @@ export async function parseImportFile(file: File, source: ImportSource, imported
           return null;
         }
       })
-      .filter((record): record is NormalizedRecord => record !== null),
+      .filter((record): record is NormalizedRecord => record !== null && Boolean(record.date)),
     source,
   );
 
@@ -710,7 +807,7 @@ export async function parseImportFile(file: File, source: ImportSource, imported
     dateRangeFrom: dateRange.from,
     dateRangeTo: dateRange.to,
     errors: records.length > 0 ? errors.slice(0, 20) : ['Không nhận diện được dòng dữ liệu hợp lệ trong file.'],
-    preview: rows.slice(0, 5),
+    preview: rows.slice(0, 5).map(sanitizeRawRow),
   };
 
   return { job, records };

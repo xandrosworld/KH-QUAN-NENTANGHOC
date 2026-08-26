@@ -176,6 +176,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get('file');
   const source = formData.get('source');
+  const confirmed = formData.get('confirm') === 'true';
   const importedBy = typeof formData.get('importedBy') === 'string'
     ? String(formData.get('importedBy'))
     : auth.session.name || auth.session.email;
@@ -212,12 +213,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: duplicateError }, { status: 409 });
   }
 
+  if (!confirmed) {
+    return NextResponse.json({
+      job: result.job,
+      recordsImported: result.records.length,
+      preview: result.job.preview,
+      requiresConfirmation: true,
+    });
+  }
+
   await appendImport(result.job, result.records, ownerUserId);
 
   return NextResponse.json({
     job: result.job,
     recordsImported: result.records.length,
     preview: result.job.preview,
+    requiresConfirmation: false,
   });
 }
 

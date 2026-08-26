@@ -50,7 +50,47 @@ function isSuccessOrder(record: NormalizedRecord) {
 }
 
 function isIssueOrder(record: NormalizedRecord) {
-  return record.type === 'order' && (record.status === 'cancelled' || record.status === 'refunded');
+  return record.type === 'order' && (
+    record.status === 'cancelled' ||
+    record.status === 'refunded' ||
+    record.refundAmount > 0
+  );
+}
+
+function normalizeIdentity(value?: string) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd')
+    .replace(/\u0110/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getIssueRecords(records: NormalizedRecord[]) {
+  const issues = new Map<string, NormalizedRecord>();
+
+  records.filter(isIssueOrder).forEach((record) => {
+    const key = [
+      record.source,
+      normalizeIdentity(record.orderId || record.id),
+      normalizeIdentity(record.sku || record.productName),
+      record.status === 'cancelled' && record.refundAmount <= 0 ? 'cancelled' : 'refund',
+    ].join('|');
+    const current = issues.get(key);
+    if (!current || record.refundAmount > current.refundAmount) issues.set(key, record);
+  });
+
+  return [...issues.values()];
+}
+
+function getAdsTotalRecords(records: NormalizedRecord[]) {
+  const adsRecords = records.filter((record) => record.type === 'ads');
+  const hasTikTokSummary = adsRecords.some((record) => record.channel === 'TikTok Ads - Tong hop');
+
+  if (!hasTikTokSummary) return adsRecords;
+  return adsRecords.filter((record) => record.channel !== 'TikTok Live');
 }
 
 function getCogsForOrder(record: NormalizedRecord, cogsMap: Map<string, number>) {
@@ -76,6 +116,10 @@ function getDailyMap(records: NormalizedRecord[], cogsMap: Map<string, number>) 
     soldProducts: number;
     issues: number;
   }>();
+  const adsTotalRecords = new Set(getAdsTotalRecords(records).map((record) => record.id));
+  const dailyOrderIds = new Map<string, Set<string>>();
+  const dailyIssueIds = new Map<string, Set<string>>();
+
   records.forEach((record) => {
     const item = daily.get(record.date) ?? { revenue: 0, netProfit: 0, adsCost: 0, cogs: 0, orders: 0, soldProducts: 0, issues: 0 };
     if (isSuccessOrder(record)) {
@@ -83,18 +127,30 @@ function getDailyMap(records: NormalizedRecord[], cogsMap: Map<string, number>) 
       item.revenue += record.revenue;
       item.cogs += cogs;
       item.netProfit += record.revenue - cogs - record.platformFee;
-      item.orders += 1;
+      const orderIds = dailyOrderIds.get(record.date) ?? new Set<string>();
+      orderIds.add(record.orderId || record.id);
+      dailyOrderIds.set(record.date, orderIds);
       item.soldProducts += record.quantity;
     }
-    if (isIssueOrder(record)) {
-      item.issues += 1;
-      item.netProfit -= record.refundAmount || record.revenue;
-    }
-    if (record.type === 'ads') {
+    if (record.type === 'ads' && adsTotalRecords.has(record.id)) {
       item.adsCost += record.adsCost;
       item.netProfit -= record.adsCost;
     }
     daily.set(record.date, item);
+  });
+
+  getIssueRecords(records).forEach((record) => {
+    const item = daily.get(record.date) ?? { revenue: 0, netProfit: 0, adsCost: 0, cogs: 0, orders: 0, soldProducts: 0, issues: 0 };
+    const issueIds = dailyIssueIds.get(record.date) ?? new Set<string>();
+    issueIds.add(record.orderId || record.id);
+    dailyIssueIds.set(record.date, issueIds);
+    item.netProfit -= record.refundAmount;
+    daily.set(record.date, item);
+  });
+
+  daily.forEach((item, date) => {
+    item.orders = dailyOrderIds.get(date)?.size ?? 0;
+    item.issues = dailyIssueIds.get(date)?.size ?? 0;
   });
   return daily;
 }
@@ -190,6 +246,8 @@ function buildCostStructure(totals: AnalyticsPayload['totals']) {
 
 function buildProfitRows(records: NormalizedRecord[], cogsMap: Map<string, number>) {
   const grouped = new Map<string, { revenue: number; cogs: number; adsCost: number; platformFee: number; refundAmount: number }>();
+  const adsTotalRecords = new Set(getAdsTotalRecords(records).map((record) => record.id));
+
   records.forEach((record) => {
     const channel = record.type === 'ads' ? 'Ads' : record.channel;
     const item = grouped.get(channel) ?? { revenue: 0, cogs: 0, adsCost: 0, platformFee: 0, refundAmount: 0 };
@@ -198,9 +256,14 @@ function buildProfitRows(records: NormalizedRecord[], cogsMap: Map<string, numbe
       item.cogs += getCogsForOrder(record, cogsMap);
       item.platformFee += record.platformFee;
     }
-    if (record.status === 'cancelled' || record.status === 'refunded') item.refundAmount += record.refundAmount || record.revenue;
-    if (record.type === 'ads') item.adsCost += record.adsCost;
+    if (record.type === 'ads' && adsTotalRecords.has(record.id)) item.adsCost += record.adsCost;
     grouped.set(channel, item);
+  });
+
+  getIssueRecords(records).forEach((record) => {
+    const item = grouped.get(record.channel) ?? { revenue: 0, cogs: 0, adsCost: 0, platformFee: 0, refundAmount: 0 };
+    item.refundAmount += record.refundAmount;
+    grouped.set(record.channel, item);
   });
 
   return [...grouped.entries()]
@@ -225,27 +288,79 @@ function buildProfitRows(records: NormalizedRecord[], cogsMap: Map<string, numbe
     }));
 }
 
-export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
-  const hasRecords = records.length > 0;
-  const change = (value: number) => (hasRecords ? value : 0);
+function getSummaryMetrics(records: NormalizedRecord[]) {
   const cogsMap = getCogsMap(records);
   const orders = records.filter(isSuccessOrder);
-  const issueOrders = records.filter(isIssueOrder);
+  const issues = getIssueRecords(records);
   const revenue = orders.reduce((sum, record) => sum + record.revenue, 0);
   const orderCount = new Set(orders.map((record) => record.orderId || record.id)).size;
-  const issueOrderCount = new Set(issueOrders.map((record) => record.orderId || record.id)).size;
+  const issueOrderCount = new Set(issues.map((record) => record.orderId || record.id)).size;
+  const allOrderCount = new Set([
+    ...orders.map((record) => record.orderId || record.id),
+    ...issues.map((record) => record.orderId || record.id),
+  ]).size;
   const soldProducts = orders.reduce((sum, record) => sum + record.quantity, 0);
   const platformFee = orders.reduce((sum, record) => sum + record.platformFee, 0);
-  const adsCost = records.filter((record) => record.type === 'ads').reduce((sum, record) => sum + record.adsCost, 0);
+  const adsCost = getAdsTotalRecords(records).reduce((sum, record) => sum + record.adsCost, 0);
   const cogs = orders.reduce((sum, record) => sum + getCogsForOrder(record, cogsMap), 0);
-  const refundAmount = issueOrders.reduce((sum, record) => sum + (record.refundAmount || record.revenue), 0);
+  const refundAmount = issues.reduce((sum, record) => sum + record.refundAmount, 0);
   const grossProfit = revenue - cogs;
   const netProfit = grossProfit - adsCost - platformFee - refundAmount;
   const aov = revenue / Math.max(orderCount, 1);
-  const refundRate = (issueOrderCount / Math.max(orderCount + issueOrderCount, 1)) * 100;
+  const refundRate = (issueOrderCount / Math.max(allOrderCount, 1)) * 100;
   const margin = (netProfit / Math.max(revenue, 1)) * 100;
   const roas = revenue / Math.max(adsCost, 1);
   const cpa = adsCost / Math.max(orderCount, 1);
+
+  return { revenue, orderCount, soldProducts, platformFee, adsCost, cogs, refundAmount, grossProfit, netProfit, aov, refundRate, margin, roas, cpa };
+}
+
+function percentageChange(current: number, previous: number) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return 0;
+  return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
+}
+
+export function buildAnalytics(records: NormalizedRecord[], comparisonRecords: NormalizedRecord[] = []): AnalyticsPayload {
+  const hasRecords = records.length > 0;
+  const cogsMap = getCogsMap(records);
+  const cogsAvailable = cogsMap.size > 0;
+  const orders = records.filter(isSuccessOrder);
+  const issueOrders = getIssueRecords(records);
+  const adsRecords = getAdsTotalRecords(records);
+  const revenue = orders.reduce((sum, record) => sum + record.revenue, 0);
+  const orderCount = new Set(orders.map((record) => record.orderId || record.id)).size;
+  const issueOrderCount = new Set(issueOrders.map((record) => record.orderId || record.id)).size;
+  const allOrderCount = new Set([
+    ...orders.map((record) => record.orderId || record.id),
+    ...issueOrders.map((record) => record.orderId || record.id),
+  ]).size;
+  const soldProducts = orders.reduce((sum, record) => sum + record.quantity, 0);
+  const platformFee = orders.reduce((sum, record) => sum + record.platformFee, 0);
+  const adsCost = adsRecords.reduce((sum, record) => sum + record.adsCost, 0);
+  const cogs = orders.reduce((sum, record) => sum + getCogsForOrder(record, cogsMap), 0);
+  const refundAmount = issueOrders.reduce((sum, record) => sum + record.refundAmount, 0);
+  const grossProfit = revenue - cogs;
+  const netProfit = grossProfit - adsCost - platformFee - refundAmount;
+  const aov = revenue / Math.max(orderCount, 1);
+  const refundRate = (issueOrderCount / Math.max(allOrderCount, 1)) * 100;
+  const margin = (netProfit / Math.max(revenue, 1)) * 100;
+  const roas = revenue / Math.max(adsCost, 1);
+  const cpa = adsCost / Math.max(orderCount, 1);
+  const previous = getSummaryMetrics(comparisonRecords);
+  const changesByLegacySlot = new Map<number, number>([
+    [18.5, percentageChange(revenue, previous.revenue)],
+    [15.2, percentageChange(orderCount, previous.orderCount)],
+    [-7.8, percentageChange(aov, previous.aov)],
+    [7.8, percentageChange(soldProducts, previous.soldProducts)],
+    [2.6, percentageChange(refundRate, previous.refundRate)],
+    [8.3, percentageChange(grossProfit, previous.grossProfit)],
+    [12.1, percentageChange(netProfit, previous.netProfit)],
+    [2.4, percentageChange(margin, previous.margin)],
+    [-4.2, percentageChange(adsCost, previous.adsCost)],
+    [15.1, percentageChange(roas, previous.roas)],
+    [-6.3, percentageChange(cpa, previous.cpa)],
+  ]);
+  const change = (slot: number) => hasRecords ? (changesByLegacySlot.get(slot) ?? 0) : 0;
 
   const totals: AnalyticsPayload['totals'] = {
     revenue,
@@ -295,17 +410,30 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
     { id: 'cpa', title: 'CPA', value: formatVnd(cpa), change: change(-6.3), changeLabel: 'so với tháng trước', icon: 'Target', color: 'red', sparklineData: makeSparkline(orderValues) },
   ];
 
-  const revenueDetailRows = dailyEntries.slice(0, 31).map<RevenueDetailRow>(([date, item], index) => ({
-    rank: index + 1,
-    date: new Date(date).toLocaleDateString('vi-VN'),
-    doanhThu: formatVnd(item.revenue),
-    donHang: formatCompact(item.orders),
-    sanPhamDaBan: formatCompact(item.soldProducts),
-    aov: formatVnd(item.revenue / Math.max(item.orders, 1)),
-    tyLeHoan: formatPercent((item.issues / Math.max(item.orders + item.issues, 1)) * 100),
-    soVoiKyTruoc: `${index % 3 === 0 ? '-' : '+'}${(5 + (index % 8)).toFixed(1)}%`,
-    soVoiKyTruocType: index % 3 === 0 ? 'down' : 'up',
-  }));
+  if (!cogsAvailable) {
+    profitKpis[0] = { ...profitKpis[0], title: 'Lợi nhuận trước giá vốn', value: formatVnd(netProfit) };
+    profitKpis[1] = { ...profitKpis[1], title: 'Net Profit', value: 'Chưa có giá vốn', change: 0, changeLabel: 'cần dữ liệu giá vốn' };
+    profitKpis[2] = { ...profitKpis[2], title: 'Biên trước giá vốn', value: formatPercent(margin) };
+  }
+
+  const revenueDetailRows = dailyEntries.slice(0, 31).map<RevenueDetailRow>(([date, item], index) => {
+    const previousDate = new Date(`${date}T00:00:00Z`);
+    previousDate.setUTCDate(previousDate.getUTCDate() - 1);
+    const previousDayRevenue = dailyMap.get(previousDate.toISOString().slice(0, 10))?.revenue ?? 0;
+    const dailyChange = percentageChange(item.revenue, previousDayRevenue);
+
+    return {
+      rank: index + 1,
+      date: new Date(date).toLocaleDateString('vi-VN'),
+      doanhThu: formatVnd(item.revenue),
+      donHang: formatCompact(item.orders),
+      sanPhamDaBan: formatCompact(item.soldProducts),
+      aov: formatVnd(item.revenue / Math.max(item.orders, 1)),
+      tyLeHoan: formatPercent((item.issues / Math.max(item.orders + item.issues, 1)) * 100),
+      soVoiKyTruoc: `${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(1)}%`,
+      soVoiKyTruocType: dailyChange < 0 ? 'down' : 'up',
+    };
+  });
 
   const profitRows = buildProfitRows(records, cogsMap);
   const channelProfits = profitRows.map((row) => {
@@ -343,6 +471,11 @@ export function buildAnalytics(records: NormalizedRecord[]): AnalyticsPayload {
     costStructure: buildCostStructure(totals),
     channelProfits: channelProfits as AnalyticsPayload['channelProfits'],
     totals,
+    dataQuality: {
+      cogsAvailable,
+      profitMode: cogsAvailable ? 'full' : 'before-cogs',
+      warnings: cogsAvailable ? [] : ['Chưa có dữ liệu giá vốn; các chỉ số lợi nhuận đang được trình bày trước giá vốn.'],
+    },
   };
 }
 

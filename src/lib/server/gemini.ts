@@ -28,6 +28,7 @@ export function hasGeminiConfig() {
 function compactAnalyticsContext(analytics: AnalyticsPayload) {
   return {
     totals: analytics.totals,
+    dataQuality: analytics.dataQuality,
     channelRevenue: analytics.channelRevenue,
     costStructure: analytics.costStructure,
     topProducts: analytics.topProducts.slice(0, 8),

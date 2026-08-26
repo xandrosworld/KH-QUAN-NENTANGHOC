@@ -180,8 +180,77 @@ export async function getDisplayJobs(ownerUserId?: string): Promise<ImportJob[]>
   return getImportedJobs(ownerUserId);
 }
 
+function normalizeIdentity(value?: string) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd')
+    .replace(/\u0110/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getCanonicalKey(record: NormalizedRecord) {
+  if (record.type === 'order' && record.orderId) {
+    return [
+      'order',
+      record.ownerUserId ?? '',
+      record.source,
+      normalizeIdentity(record.orderId),
+      normalizeIdentity(record.sku || record.productName),
+      record.status,
+    ].join('|');
+  }
+
+  if (record.type === 'ads') {
+    return [
+      'ads',
+      record.ownerUserId ?? '',
+      record.channel,
+      record.date,
+      normalizeIdentity(record.campaignName),
+      Math.round(record.adsCost),
+      Math.round(record.revenue),
+    ].join('|');
+  }
+
+  if (record.type === 'cogs') {
+    return [
+      'cogs',
+      record.ownerUserId ?? '',
+      normalizeIdentity(record.sku || record.productName),
+      record.date,
+    ].join('|');
+  }
+
+  return record.id;
+}
+
+function recordCompleteness(record: NormalizedRecord) {
+  return Object.keys(record.raw ?? {}).length
+    + Number(record.revenue > 0)
+    + Number(record.refundAmount > 0)
+    + Number(record.platformFee > 0)
+    + Number(record.quantity > 0);
+}
+
+export function canonicalizeRecords(records: NormalizedRecord[]) {
+  const canonical = new Map<string, NormalizedRecord>();
+
+  records.forEach((record) => {
+    const key = getCanonicalKey(record);
+    const current = canonical.get(key);
+    if (!current || recordCompleteness(record) > recordCompleteness(current)) {
+      canonical.set(key, record);
+    }
+  });
+
+  return [...canonical.values()];
+}
+
 export async function getActiveRecords(ownerUserId?: string): Promise<NormalizedRecord[]> {
-  return getImportedRecords(ownerUserId);
+  return canonicalizeRecords(await getImportedRecords(ownerUserId));
 }
 
 export async function appendImport(job: ImportJob, records: NormalizedRecord[], ownerUserId?: string) {

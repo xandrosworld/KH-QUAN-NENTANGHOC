@@ -50,6 +50,11 @@ export const emptyAnalyticsPayload: AnalyticsPayload = {
     roas: 0,
     cpa: 0,
   },
+  dataQuality: {
+    cogsAvailable: false,
+    profitMode: 'before-cogs',
+    warnings: ['Chưa có dữ liệu giá vốn; các chỉ số lợi nhuận đang được trình bày trước giá vốn.'],
+  },
   availableFilters: {
     dateRange: {},
     sources: [],

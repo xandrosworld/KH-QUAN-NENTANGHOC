@@ -105,6 +105,31 @@ export function filterAnalyticsRecords(records: NormalizedRecord[], filters: Ana
   return [...factRecords, ...cogsRecords];
 }
 
+function shiftDate(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+export function getPreviousPeriodRecords(records: NormalizedRecord[], filters: AnalyticsActiveFilters) {
+  const sameDimensions = filterAnalyticsRecords(records, { ...filters, from: undefined, to: undefined });
+  const factDates = sameDimensions
+    .filter((record) => record.type !== 'cogs')
+    .map((record) => record.date)
+    .sort();
+  const from = filters.from ?? factDates[0];
+  const to = filters.to ?? factDates[factDates.length - 1];
+  if (!from || !to) return [];
+
+  const fromTime = new Date(`${from}T00:00:00Z`).getTime();
+  const toTime = new Date(`${to}T00:00:00Z`).getTime();
+  const durationDays = Math.max(1, Math.round((toTime - fromTime) / 86_400_000) + 1);
+  const previousTo = shiftDate(from, -1);
+  const previousFrom = shiftDate(previousTo, -(durationDays - 1));
+
+  return filterAnalyticsRecords(records, { ...filters, from: previousFrom, to: previousTo });
+}
+
 function uniqueSorted(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'vi'));

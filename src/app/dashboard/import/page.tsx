@@ -72,6 +72,18 @@ const templateMap: Record<string, string> = {
   giavon: "/templates/giavon-template.csv",
 };
 
+type ImportPreview = {
+  recordsImported: number;
+  preview: Record<string, unknown>[];
+  job: {
+    validRows: number;
+    errorRows: number;
+    dateRangeFrom?: string;
+    dateRangeTo?: string;
+    errors?: string[];
+  };
+};
+
 export default function ImportPage() {
   const [selectedSource, setSelectedSource] = useState("shopee");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -81,6 +93,7 @@ export default function ImportPage() {
   const [historyItems, setHistoryItems] = useState<ImportHistoryItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [importedByName, setImportedByName] = useState("");
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadImportHistory = useCallback(async () => {
@@ -180,11 +193,13 @@ export default function ImportPage() {
     if (!result.valid) {
       setFileError(result.error);
       setImportMessage(null);
+      setImportPreview(null);
       setSelectedFile(null);
       return;
     }
     setFileError(null);
     setImportMessage(null);
+    setImportPreview(null);
     setSelectedFile(file);
   }, []);
 
@@ -230,6 +245,7 @@ export default function ImportPage() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("source", selectedSource);
+    formData.append("confirm", importPreview ? "true" : "false");
     if (importedByName) formData.append("importedBy", importedByName);
 
     try {
@@ -244,15 +260,23 @@ export default function ImportPage() {
         return;
       }
 
+      if (payload.requiresConfirmation) {
+        setImportPreview(payload as ImportPreview);
+        return;
+      }
+
       setImportMessage(`Import thành công ${Number(payload.recordsImported ?? 0).toLocaleString("vi-VN")} dòng dữ liệu.`);
       setSelectedFile(null);
+      setImportPreview(null);
       await loadImportHistory();
     } catch {
       setFileError("Không kết nối được API import. Vui lòng thử lại.");
     } finally {
       setIsImporting(false);
     }
-  }, [importedByName, loadImportHistory, selectedFile, selectedSource]);
+  }, [importPreview, importedByName, loadImportHistory, selectedFile, selectedSource]);
+
+  const activeStep = importPreview ? 3 : selectedFile ? 2 : 1;
 
   return (
     <div className="space-y-5">
@@ -279,14 +303,14 @@ export default function ImportPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                      index === 0 ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"
+                      index <= activeStep ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"
                     }`}
                   >
                     {step.num}
                   </div>
                   <span
                     className={`whitespace-pre-line text-sm font-medium leading-tight ${
-                      index === 0 ? "text-gray-900" : "text-gray-400"
+                      index <= activeStep ? "text-gray-900" : "text-gray-400"
                     }`}
                   >
                     {step.label}
@@ -311,7 +335,11 @@ export default function ImportPage() {
                 return (
                   <button
                     key={source.id}
-                    onClick={() => setSelectedSource(source.id)}
+                    onClick={() => {
+                      setSelectedSource(source.id);
+                      setImportPreview(null);
+                      setImportMessage(null);
+                    }}
                     className={`flex min-h-[104px] flex-col items-start justify-between rounded-xl border bg-white p-3 text-left transition ${
                       active
                         ? "border-green-500 shadow-[0_0_0_1px_rgba(0,155,83,0.35)]"
@@ -415,11 +443,30 @@ export default function ImportPage() {
                     setSelectedFile(null);
                     setFileError(null);
                     setImportMessage(null);
+                    setImportPreview(null);
                   }}
                   className="shrink-0 p-1 text-gray-400 transition hover:text-red-500"
                 >
                   <X size={16} />
                 </button>
+              </div>
+            )}
+
+            {importPreview && (
+              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+                  <CheckCircle2 size={17} />
+                  Kiểm tra dữ liệu hoàn tất — chưa ghi vào hệ thống
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                  <div><span className="text-blue-600">Hợp lệ:</span> <strong>{importPreview.job.validRows.toLocaleString("vi-VN")}</strong></div>
+                  <div><span className="text-blue-600">Lỗi:</span> <strong>{importPreview.job.errorRows.toLocaleString("vi-VN")}</strong></div>
+                  <div><span className="text-blue-600">Từ:</span> <strong>{importPreview.job.dateRangeFrom ?? "-"}</strong></div>
+                  <div><span className="text-blue-600">Đến:</span> <strong>{importPreview.job.dateRangeTo ?? "-"}</strong></div>
+                </div>
+                {Boolean(importPreview.job.errors?.length) && (
+                  <p className="mt-2 text-xs text-amber-700">{importPreview.job.errors?.[0]}</p>
+                )}
               </div>
             )}
 
@@ -429,6 +476,7 @@ export default function ImportPage() {
                   onClick={() => {
                     setSelectedFile(null);
                     setImportMessage(null);
+                    setImportPreview(null);
                   }}
                   className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
                 >
@@ -440,7 +488,9 @@ export default function ImportPage() {
                   className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isImporting && <Loader2 size={16} className="animate-spin" />}
-                  {isImporting ? "Đang import..." : "Import dữ liệu"}
+                  {isImporting
+                    ? importPreview ? "Đang xác nhận..." : "Đang kiểm tra..."
+                    : importPreview ? "Xác nhận import" : "Kiểm tra dữ liệu"}
                 </button>
               </div>
             )}

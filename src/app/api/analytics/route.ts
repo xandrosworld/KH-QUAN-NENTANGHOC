@@ -3,6 +3,7 @@ import {
   buildAnalyticsFilterOptions,
   countFactRecords,
   filterAnalyticsRecords,
+  getPreviousPeriodRecords,
   parseAnalyticsFilters,
 } from '@/lib/analytics-filters';
 import { buildAnalytics } from '@/lib/server/analytics';
@@ -18,9 +19,10 @@ export async function GET(request: Request) {
   const records = await getActiveRecords(auth.session.sub);
   const filters = parseAnalyticsFilters(new URL(request.url).searchParams);
   const filteredRecords = filterAnalyticsRecords(records, filters);
+  const previousPeriodRecords = getPreviousPeriodRecords(records, filters);
 
   return NextResponse.json({
-    ...buildAnalytics(filteredRecords),
+    ...buildAnalytics(filteredRecords, previousPeriodRecords),
     activeFilters: filters,
     availableFilters: buildAnalyticsFilterOptions(records),
     recordCount: {

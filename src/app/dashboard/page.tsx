@@ -10,7 +10,7 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import type { AnalyticsActiveFilters } from '@/lib/data-types';
 import type { ChannelRevenue, ChartDataPoint, TopCampaign, TopProduct } from '@/lib/types';
 
-function RevenueChart({ data }: { data: ChartDataPoint[] }) {
+function RevenueChart({ data, cogsAvailable }: { data: ChartDataPoint[]; cogsAvailable: boolean }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -26,7 +26,7 @@ function RevenueChart({ data }: { data: ChartDataPoint[] }) {
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-sm text-gray-500">Lợi nhuận</span>
+          <span className="text-sm text-gray-500">{cogsAvailable ? 'Lợi nhuận' : 'Lợi nhuận trước giá vốn'}</span>
         </div>
       </div>
       <div className="h-60">
@@ -133,11 +133,11 @@ function ChannelDonut({ data, total }: { data: ChannelRevenue[]; total: number }
   );
 }
 
-function TopProductsTable({ products }: { products: TopProduct[] }) {
+function TopProductsTable({ products, cogsAvailable }: { products: TopProduct[]; cogsAvailable: boolean }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-gray-900">Top Sản Phẩm (Theo lợi nhuận)</h3>
+        <h3 className="text-base font-semibold text-gray-900">Top Sản Phẩm ({cogsAvailable ? 'Theo lợi nhuận' : 'Trước giá vốn'})</h3>
         <Link href="/dashboard/reports/products" className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
           Xem thêm
           <ChevronRight size={16} />
@@ -150,8 +150,8 @@ function TopProductsTable({ products }: { products: TopProduct[] }) {
               <th className="px-3 py-3 text-left font-semibold rounded-l-lg">#</th>
               <th className="px-3 py-3 text-left font-semibold">Sản Phẩm</th>
               <th className="px-3 py-3 text-right font-semibold">Doanh Thu</th>
-              <th className="px-3 py-3 text-right font-semibold">Lợi Nhuận</th>
-              <th className="px-3 py-3 text-right font-semibold rounded-r-lg">Net Profit</th>
+              <th className="px-3 py-3 text-right font-semibold">{cogsAvailable ? 'Lợi Nhuận' : 'Lãi trước giá vốn'}</th>
+              <th className="px-3 py-3 text-right font-semibold rounded-r-lg">{cogsAvailable ? 'Net Profit' : 'Biên trước giá vốn'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -275,13 +275,13 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <RevenueChart data={chartData} />
+        <RevenueChart data={chartData} cogsAvailable={analytics.dataQuality.cogsAvailable} />
         <ChannelDonut data={channelData} total={totalRevenue} />
       </div>
 
       {/* Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <TopProductsTable products={productRows} />
+        <TopProductsTable products={productRows} cogsAvailable={analytics.dataQuality.cogsAvailable} />
         <TopCampaignsTable campaigns={campaignRows} />
       </div>
     </div>

@@ -128,6 +128,11 @@ export interface AnalyticsPayload {
     roas: number;
     cpa: number;
   };
+  dataQuality: {
+    cogsAvailable: boolean;
+    profitMode: 'full' | 'before-cogs';
+    warnings: string[];
+  };
   activeFilters?: AnalyticsActiveFilters;
   availableFilters?: AnalyticsFilterOptions;
   recordCount?: {

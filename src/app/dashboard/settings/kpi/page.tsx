@@ -29,7 +29,7 @@ export default function KpiSettingsPage() {
           <div>
             <h2 className="text-sm font-semibold text-green-800">Trạng thái triển khai</h2>
             <p className="mt-1 text-sm text-green-700">
-              Bộ công thức đang được áp dụng cho dữ liệu đã import và tự động cập nhật trên dashboard.
+              Bộ công thức đang được áp dụng cho dữ liệu đã import và tự động cập nhật trên dashboard. Bộ dữ liệu hiện tại chưa có giá vốn theo SKU, vì vậy hệ thống hiển thị lợi nhuận trước giá vốn và chưa công bố Net Profit đầy đủ.
             </p>
           </div>
         </div>
