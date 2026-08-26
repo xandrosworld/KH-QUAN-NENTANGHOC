@@ -22,7 +22,8 @@ function getGeminiModel() {
 }
 
 export function hasGeminiConfig() {
-  return Boolean(getGeminiApiKey());
+  const disabled = ['1', 'true', 'yes'].includes((process.env.GEMINI_DISABLED ?? '').trim().toLowerCase());
+  return Boolean(getGeminiApiKey()) && !disabled;
 }
 
 function compactAnalyticsContext(analytics: AnalyticsPayload) {

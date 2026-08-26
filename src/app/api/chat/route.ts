@@ -28,7 +28,10 @@ export async function POST(request: Request) {
   const { totals } = analytics;
 
   if (!message) {
-    return NextResponse.json({ answer: 'Bạn muốn xem chỉ số nào: doanh thu, net profit, ROAS, top sản phẩm hay top campaign?' });
+    return NextResponse.json({
+      answer: `Bạn muốn xem chỉ số nào: doanh thu, ${analytics.dataQuality.cogsAvailable ? 'Net Profit' : 'lợi nhuận trước giá vốn'}, ROAS, top sản phẩm hay top campaign?`,
+      provider: 'local',
+    });
   }
 
   if (
@@ -37,6 +40,7 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.json({
       answer: `Khách hàng chưa cung cấp giá vốn theo SKU nên chưa thể tính Net Profit chính xác. Lợi nhuận trước giá vốn hiện tại là ${formatVnd(totals.netProfit)}; chỉ số này đã trừ chi phí Ads, phí sàn và hoàn tiền.`,
+      provider: 'local',
       analytics: { totals, dataQuality: analytics.dataQuality },
     });
   }
@@ -67,13 +71,20 @@ export async function POST(request: Request) {
     answer = `Tỷ lệ hoàn/hủy hiện khoảng ${formatPercent(totals.refundRate)}, giá trị hoàn/hủy ghi nhận ${formatVnd(totals.refundAmount)}.`;
   } else if (includesAny(message, ['top sản phẩm', 'sản phẩm', 'product'])) {
     const top = analytics.topProducts.slice(0, 3).map((item) => `${item.rank}. ${item.name}: ${item.revenue}`).join('\n');
-    answer = `Top sản phẩm theo lợi nhuận:\n${top}`;
+    answer = `Top sản phẩm theo ${analytics.dataQuality.cogsAvailable ? 'lợi nhuận' : 'doanh thu'}:\n${top}`;
   } else if (includesAny(message, ['campaign', 'chiến dịch'])) {
     const top = analytics.topCampaigns.slice(0, 3).map((item) => `${item.rank}. ${item.name}: ROAS ${item.roas}x`).join('\n');
     answer = `Top campaign theo ROAS:\n${top || 'Chưa có dữ liệu campaign/ads để xếp hạng.'}`;
   } else {
-    answer = `Tổng quan nhanh: doanh thu ${formatVnd(totals.revenue)}, net profit ${formatVnd(totals.netProfit)}, ROAS ${totals.roas.toFixed(2)}x, margin ${formatPercent(totals.margin)}. Bạn có thể hỏi sâu hơn về doanh thu, lợi nhuận, ads, hoàn/hủy, top sản phẩm hoặc campaign.`;
+    const profitSummary = analytics.dataQuality.cogsAvailable
+      ? `Net Profit ${formatVnd(totals.netProfit)}, margin ${formatPercent(totals.margin)}`
+      : `lợi nhuận trước giá vốn ${formatVnd(totals.netProfit)}`;
+    answer = `Tổng quan nhanh: doanh thu ${formatVnd(totals.revenue)}, ${profitSummary}, ROAS ${totals.roas.toFixed(2)}x. Bạn có thể hỏi sâu hơn về doanh thu, lợi nhuận, ads, hoàn/hủy, top sản phẩm hoặc campaign.`;
   }
 
-  return NextResponse.json({ answer, analytics: { totals } });
+  return NextResponse.json({
+    answer,
+    provider: 'local',
+    analytics: { totals, dataQuality: analytics.dataQuality },
+  });
 }
